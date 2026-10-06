@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f5eb">
+  <meta name="description" content="开始学习，唤醒森林里的小伙伴。暂停时让它休息，用安静的计时器记录每一段专注。">
+  <meta property="og:title" content="森里 · 学习计时">
+  <meta property="og:description" content="和森林里的小伙伴，一起积攒专注时光。">
+  <title>森里 · 学习计时</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232e493a'/%3E%3Cpath d='M8 22C8 10 17 7 25 7c0 11-6 18-15 17m1-3L21 11' fill='%23dce8bb' stroke='%23dce8bb' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+  <script src="companion-scene.js" type="module"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="header">
+      <a class="brand" href="./" aria-label="森里，学习计时首页"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18C5 7 13 4 21 4c0 10-6 17-14 16M8 17 17 8"/></svg></span><span>森里<span class="brand-sub">学习计时</span></span></a>
+      <div class="header-meta"><span id="date"></span><span class="prototype">原型体验</span></div>
+    </header>
+
+    <main>
+      <div class="page-heading"><div><p class="eyebrow">YOUR LITTLE STUDY COMPANION</p><h1>今天，也一起专注吧。</h1></div><p class="heading-note">把时间留给学习，把陪伴交给它。</p></div>
+      <section class="workspace" aria-label="学习计时器">
+        <div class="forest" id="forest" data-state="idle">
+          <div class="scene-images" aria-hidden="true"><img class="scene awake" src="assets/awake.jpeg" alt="" fetchpriority="high"><img class="scene sleeping" src="assets/sleeping.jpeg" alt="" fetchpriority="high"></div>
+          <div id="world-3d" class="world-3d"></div>
+          <div class="scene-shade" aria-hidden="true"></div>
+          <div class="speech" id="speech">我先眯一会儿…<span aria-hidden="true"></span></div>
+          <div class="sleep-letters" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div>
+          <div class="scene-caption"><span class="scene-icon" id="scene-icon" aria-hidden="true">☾</span><span id="animal-status">小伙伴正在休息</span></div>
+          <span class="scene-credit" id="view-hint">拖动看看它 · 3D 伙伴</span>
+          <span class="activity-label" id="activity-label">正在睡觉</span>
+        </div>
+
+        <div class="timer-panel">
+          <div class="timer-top"><span class="panel-label">本次学习</span><span class="state-pill" id="state-pill">准备开始</span></div>
+          <div class="timer-center"><p class="timer-kicker" id="timer-kicker">你的专注时光</p><output class="timer" id="timer" aria-live="off" aria-label="本次学习时长">00:00:00</output><p class="timer-message" id="timer-message">开始计时，叫醒你的森林伙伴。</p></div>
+          <div class="actions"><button class="start-button" id="toggle"><svg class="button-icon" id="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7Z"/></svg><span id="toggle-label">开始学习</span></button><button class="finish-button" id="finish" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1"/></svg>结束本次</button></div>
+          <p class="timer-tip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm0 4v4l3 2"/></svg>暂停时，小伙伴也会睡个小觉。</p>
+        </div>
+      </section>
+
+      <section class="today-panel" aria-labelledby="today-heading"><div class="today-title"><span class="sun-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span><div><h2 id="today-heading">今天的积累</h2><p id="today-note">每一小段专注，都算数。</p></div></div><div class="stat"><span>学习时间</span><strong id="today-total">0<span> 分钟</span></strong></div><div class="stat"><span>完成学习</span><strong id="today-count">0<span> 次</span></strong></div></section>
+      <section class="sessions-section" aria-labelledby="sessions-heading"><div class="section-heading"><h2 id="sessions-heading">学习足迹</h2><span id="storage-note">记录保存在此设备</span></div><div id="sessions" class="sessions"><div class="empty-record"><span aria-hidden="true">◌</span><p>还没有完成的学习记录。开始你的第一段专注吧。</p></div></div></section>
+    </main>
+    <footer>慢慢来，一次专注一点点。<span>森里</span></footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="sr-only" id="announcement" aria-live="polite"></div>
+  </div>
+</body>
+</html>
