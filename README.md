@@ -2,6 +2,14 @@
 
 一个森林伙伴陪伴的学习计时 App 原型。点击开始学习，小伙伴会醒来、轻轻挪步和吃叶子；暂停或结束学习时，它会闭眼睡觉。
 
+## 固定工作目录
+
+项目已移到桌面：`/Users/unsio/Desktop/senli-study-companion`。
+后续源码修改统一在这个文件夹中进行。页面入口为 `dist/index.html`，计时和科目统计逻辑为 `dist/app.js`，界面样式为 `dist/styles.css`。
+
+GitHub 仓库：<https://github.com/HongWangCheang/game>，当前分支为 `codex/senli-study-companion`。
+原工作区中的 `work/forest-study` 只作为现有 Sites 网站的发布同步目录；需要发布时从桌面工作目录同步，不单独在旧目录开发。
+
 ## 本地运行
 
 这是静态 HTML、CSS 和 JavaScript 项目，无需安装 npm 依赖或构建。
