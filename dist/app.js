@@ -9,12 +9,24 @@
   const validMinutes = value => Number.isInteger(value) && value >= 5 && value <= 120;
   const text = (id, value) => { const node = $(id); if (node && node.textContent !== value) node.textContent = value; };
   const on = (id, event, action) => $(id)?.addEventListener(event, action);
-  const dayKey = ms => { const d = new Date(ms); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+  const dayKey = ms => { const d = new Date(ms); return `${String(d.getFullYear()).padStart(4, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const localDate = (year, month, day) => { const date = new Date(0); date.setFullYear(year, month, day); date.setHours(0, 0, 0, 0); return date; };
+  const dateFromKey = value => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const [year, month, day] = value.split('-').map(Number), date = localDate(year, month - 1, day);
+    return dayKey(date.getTime()) === value ? date : null;
+  };
+  const addSubjectValue = '__add_subject__';
+  const normalizeSubject = value => value.trim().replace(/\s+/gu, ' ');
+  const subjectKey = value => normalizeSubject(value).normalize('NFKC').toLowerCase();
+  const defaultSubjects = Array.from($('subject-select')?.options || []).filter(option => option.value !== addSubjectValue).map(option => ({value: option.value, label: option.textContent}));
   const cleanSubject = value => typeof value === 'string' ? value.trim().slice(0, 80) : '';
   const selectedSubject = value => {
     const select = $('subject-select');
-    if (!select) return cleanSubject(value);
-    return Array.from(select.options).some(option => option.value === value) ? value : select.value;
+    if (!select) return value === addSubjectValue ? '' : cleanSubject(value);
+    const options = Array.from(select.options).filter(option => option.value !== addSubjectValue);
+    const match = value === addSubjectValue ? null : options.find(option => option.value === value) || (value ? options.find(option => subjectKey(option.value) === subjectKey(value) || subjectKey(option.textContent) === subjectKey(value)) : null);
+    return match ? match.value : defaultSubjects[0]?.value || '';
   };
   const subjectLabel = () => {
     if (!subject) return '';
@@ -25,16 +37,77 @@
   let storageAvailable = true, saved;
   try { saved = JSON.parse(localStorage.getItem(key) || 'null'); } catch { storageAvailable = false; }
   let records = [], elapsed = 0, startedAt = null, firstStartedAt = null, segments = [];
+  let dailyTotals = Object.create(null), customSubjects = [];
   let mode = 'stopwatch', pomodoroMinutes = 25, subject = selectedSubject('');
   let status = 'idle', view = 'focus', recordsRevision = 0, recordsCache = '';
   let toastTimeout, deadlineTimeout;
+  const todayDate = new Date();
+  let calendarMonth = localDate(todayDate.getFullYear(), todayDate.getMonth(), 1);
+  let calendarSelected = dayKey(Date.now()), calendarGridKey = '';
+  const calendarButtons = new Map();
   const hasSession = () => status !== 'idle';
   const targetDuration = () => mode === 'pomodoro' ? pomodoroMinutes * 60000 : Infinity;
   const rawElapsed = (now = Date.now()) => elapsed + (startedAt === null ? 0 : Math.max(0, now - startedAt));
   const currentElapsed = (now = Date.now()) => Math.min(targetDuration(), rawElapsed(now));
+  function hydrateSubjects(data) {
+    const select = $('subject-select');
+    customSubjects = [];
+    const seen = new Set(defaultSubjects.flatMap(option => [subjectKey(option.label), subjectKey(option.value)]));
+    const add = (value, legacy = false) => {
+      if (typeof value !== 'string') return;
+      const name = normalizeSubject(value), folded = subjectKey(name);
+      if (!name || folded === subjectKey(addSubjectValue) || seen.has(folded) || Array.from(name).length > (legacy ? 80 : 30)) return;
+      seen.add(folded); customSubjects.push(name);
+    };
+    if (Array.isArray(data?.customSubjects)) data.customSubjects.forEach(value => add(value, true));
+    const previous = cleanSubject(data?.subject);
+    if (previous && !defaultSubjects.some(option => option.value === previous) && !customSubjects.includes(previous)) add(previous, true);
+    if (!select) return;
+    const makeOption = (value, label) => { const option = document.createElement('option'); option.value = value; option.textContent = label; return option; };
+    select.replaceChildren(...defaultSubjects.map(option => makeOption(option.value, option.label)), ...customSubjects.map(name => makeOption(name, name)), makeOption(addSubjectValue, '+ 添加学习科目…'));
+  }
+  function addDuration(totals, date, duration) {
+    if (duration > 0) totals[date] = (totals[date] || 0) + duration;
+  }
+  function distributeRecord(record) {
+    const totals = Object.create(null);
+    let remaining = record.duration;
+    for (const segment of Array.isArray(record.segments) ? record.segments.filter(validSegment) : []) {
+      let cursor = segment.start;
+      while (cursor < segment.end && remaining > 0) {
+        const date = new Date(cursor), midnight = localDate(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime();
+        const end = Math.min(segment.end, midnight, cursor + remaining), duration = end - cursor;
+        if (duration <= 0) break;
+        addDuration(totals, dayKey(cursor), duration); remaining -= duration; cursor = end;
+      }
+    }
+    // Old records may have no segments; retain their duration on the completion day.
+    addDuration(totals, dayKey(record.endedAt), remaining);
+    return totals;
+  }
+  function loadDailyTotals(data, existingRecords) {
+    dailyTotals = Object.create(null);
+    if (data?.dailyTotals && typeof data.dailyTotals === 'object' && !Array.isArray(data.dailyTotals)) {
+      for (const [date, value] of Object.entries(data.dailyTotals)) if (dateFromKey(date) && Number.isFinite(value) && value >= 0) dailyTotals[date] = value;
+    }
+    if (data?.dailyTotalsVersion === 1) return;
+    const seeded = Object.create(null);
+    for (const record of existingRecords) for (const [date, duration] of Object.entries(distributeRecord(record))) addDuration(seeded, date, duration);
+    // An unversioned map may already contain these records. Preserve the larger known total.
+    for (const [date, duration] of Object.entries(seeded)) dailyTotals[date] = Math.max(dailyTotals[date] || 0, duration);
+  }
+  function activeDailyTotals(now = Date.now()) {
+    if (!hasSession()) return Object.create(null);
+    const end = startedAt === null ? null : Math.max(startedAt, Math.min(now, startedAt + Math.max(0, targetDuration() - elapsed)));
+    const activeSegments = end === null ? segments : [...segments, {start: startedAt, end}];
+    return distributeRecord({duration: currentElapsed(now), segments: activeSegments, endedAt: end ?? segments[segments.length - 1]?.end ?? firstStartedAt ?? now});
+  }
   function loadState(data) {
     const now = Date.now();
-    records = Array.isArray(data?.records) ? data.records.filter(validRecord).slice(0, 200) : [];
+    const existingRecords = Array.isArray(data?.records) ? data.records.filter(validRecord) : [];
+    records = existingRecords.slice(0, 200);
+    loadDailyTotals(data, existingRecords);
+    hydrateSubjects(data);
     elapsed = Number.isFinite(data?.elapsed) && data.elapsed >= 0 ? data.elapsed : 0;
     startedAt = validTime(data?.startedAt) && data.startedAt <= now ? data.startedAt : null;
     firstStartedAt = validTime(data?.firstStartedAt) ? data.firstStartedAt : null;
@@ -49,7 +122,7 @@
   loadState(saved);
   function persist() {
     try {
-      localStorage.setItem(key, JSON.stringify({records, elapsed, startedAt, firstStartedAt, segments, mode, pomodoroMinutes, subject}));
+      localStorage.setItem(key, JSON.stringify({records, elapsed, startedAt, firstStartedAt, segments, mode, pomodoroMinutes, subject, customSubjects, dailyTotals, dailyTotalsVersion: 1}));
       storageAvailable = true;
     } catch { storageAvailable = false; }
     text('storage-note', storageAvailable ? '记录保存在此设备' : '本次记录暂存于当前页面');
@@ -68,6 +141,87 @@
     if (seconds < 60) return `${seconds} 秒`;
     return `${Math.floor(seconds / 60)} 分钟${seconds % 60 ? ` ${seconds % 60} 秒` : ''}`;
   }
+  function calendarDuration(ms, compact = false) {
+    if (ms > 0 && ms < 1000) return '不足 1 秒';
+    const total = Math.floor(ms / 1000), hours = Math.floor(total / 3600), minutes = Math.floor(total / 60) % 60, seconds = total % 60;
+    if (compact) return hours ? `${hours}时${minutes ? `${minutes}分` : ''}` : minutes ? `${minutes}分` : `${seconds}秒`;
+    return [hours ? `${hours} 小时` : '', hours || minutes ? `${minutes} 分钟` : '', `${seconds} 秒`].filter(Boolean).join(' ');
+  }
+  function buildCalendarGrid() {
+    const grid = $('calendar-grid');
+    if (!grid) return;
+    const monthKey = `${calendarMonth.getFullYear()}-${calendarMonth.getMonth()}`;
+    if (monthKey === calendarGridKey) return;
+    calendarGridKey = monthKey; calendarButtons.clear();
+    const offset = (calendarMonth.getDay() + 6) % 7;
+    const start = localDate(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1 - offset);
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const date = localDate(start.getFullYear(), start.getMonth(), start.getDate() + i), dateKey = dayKey(date.getTime());
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'calendar-day'; button.dataset.date = dateKey;
+      button.classList.toggle('is-outside', date.getMonth() !== calendarMonth.getMonth());
+      const number = document.createElement('span'); number.className = 'calendar-day-number'; number.textContent = String(date.getDate());
+      const duration = document.createElement('span'); duration.className = 'calendar-day-duration';
+      button.append(number, duration);
+      button.addEventListener('click', () => {
+        calendarSelected = dateKey;
+        const outside = date.getMonth() !== calendarMonth.getMonth() || date.getFullYear() !== calendarMonth.getFullYear();
+        if (outside) calendarMonth = localDate(date.getFullYear(), date.getMonth(), 1);
+        renderCalendar();
+        if (outside) calendarButtons.get(dateKey)?.button.focus();
+      });
+      calendarButtons.set(dateKey, {button, duration, date}); cells.push(button);
+    }
+    grid.replaceChildren(...cells);
+  }
+  function renderCalendar(now = Date.now()) {
+    if (!$('calendar-dialog')?.open) return;
+    buildCalendarGrid();
+    const active = activeDailyTotals(now), totals = Object.assign(Object.create(null), dailyTotals);
+    for (const [date, duration] of Object.entries(active)) addDuration(totals, date, duration);
+    const today = dayKey(now), fullDate = new Intl.DateTimeFormat('zh-CN', {year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'});
+    text('calendar-month', new Intl.DateTimeFormat('zh-CN', {year: 'numeric', month: 'long'}).format(calendarMonth));
+    for (const [dateKey, {button, duration, date}] of calendarButtons) {
+      const value = totals[dateKey] || 0, selected = dateKey === calendarSelected;
+      const label = `${fullDate.format(date)}，学习 ${calendarDuration(value)}`;
+      if (button.getAttribute('aria-label') !== label) button.setAttribute('aria-label', label);
+      if (button.getAttribute('aria-pressed') !== String(selected)) button.setAttribute('aria-pressed', String(selected));
+      button.setAttribute('aria-current', dateKey === today ? 'date' : 'false');
+      button.classList.toggle('is-today', dateKey === today); button.classList.toggle('is-selected', selected); button.classList.toggle('has-study', value > 0);
+      const compact = value > 0 ? calendarDuration(value, true) : '—';
+      if (duration.textContent !== compact) duration.textContent = compact;
+    }
+    const selectedDate = dateFromKey(calendarSelected), selectedTotal = totals[calendarSelected] || 0;
+    if (selectedDate) text('calendar-selected-date', fullDate.format(selectedDate));
+    text('calendar-day-total', calendarDuration(selectedTotal));
+    text('calendar-day-note', active[calendarSelected] > 0 ? '包含本次尚未结束的学习时长。' : selectedTotal > 0 ? '已完成的学习时长已保存在此设备。' : '这一天还没有学习记录，慢慢积累就好。');
+    const monthPrefix = dayKey(calendarMonth.getTime()).slice(0, 7);
+    const monthTotal = Object.entries(totals).reduce((sum, [date, value]) => sum + (date.startsWith(`${monthPrefix}-`) ? value : 0), 0);
+    text('calendar-month-total', calendarDuration(monthTotal));
+  }
+  function showCalendarToday() {
+    const today = new Date(); calendarMonth = localDate(today.getFullYear(), today.getMonth(), 1); calendarSelected = dayKey(today.getTime());
+    renderCalendar();
+  }
+  function moveCalendarMonth(direction) {
+    const selected = dateFromKey(calendarSelected), day = selected?.getDate() || 1;
+    calendarMonth = localDate(calendarMonth.getFullYear(), calendarMonth.getMonth() + direction, 1);
+    const lastDay = localDate(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0).getDate();
+    calendarSelected = dayKey(localDate(calendarMonth.getFullYear(), calendarMonth.getMonth(), Math.min(day, lastDay)).getTime());
+    renderCalendar();
+  }
+  function closeSubjectDialog() {
+    if ($('subject-select')) $('subject-select').value = subject;
+    $('subject-dialog')?.close();
+  }
+  function openSubjectDialog() {
+    if ($('subject-select')) $('subject-select').value = subject;
+    if (hasSession()) return;
+    text('subject-error', '');
+    if ($('subject-name')) { $('subject-name').value = ''; $('subject-name').setCustomValidity(''); }
+    if (!$('subject-dialog')?.open) $('subject-dialog')?.showModal();
+    $('subject-name')?.focus();
+  }
   function stat(id, value, unit) {
     const node = $(id);
     if (!node || node.dataset.value === String(value)) return;
@@ -76,15 +230,7 @@
   }
   function renderRecords(now = Date.now()) {
     const today = dayKey(now), date = new Date(now);
-    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime();
-    const portion = list => list.filter(validSegment).reduce((sum, s) => sum + Math.max(0, Math.min(s.end, dayEnd) - Math.max(s.start, dayStart)), 0);
-    const completed = records.reduce((sum, record) => {
-      const hasSegments = Array.isArray(record.segments) && record.segments.some(validSegment);
-      return sum + (hasSegments ? Math.min(record.duration, portion(record.segments)) : dayKey(record.endedAt) === today ? record.duration : 0);
-    }, 0);
-    const activeEnd = startedAt === null ? null : Math.min(now, startedAt + Math.max(0, targetDuration() - elapsed));
-    const activeToday = portion(segments) + (activeEnd === null ? 0 : portion([{start: startedAt, end: activeEnd}]));
+    const completed = dailyTotals[today] || 0, activeToday = activeDailyTotals(now)[today] || 0;
     stat('today-total', Math.floor((completed + activeToday) / 60000), '分钟');
     stat('today-count', records.filter(record => dayKey(record.endedAt) === today).length, '次');
     text('date', new Intl.DateTimeFormat('zh-CN', {month: 'long', day: 'numeric', weekday: 'long'}).format(date));
@@ -140,6 +286,7 @@
     $('timer')?.setAttribute('aria-label', `${mode === 'pomodoro' ? '本次专注剩余时间' : '本次学习时长'} ${display}`);
     document.title = status === 'running' ? `${display} · 森里学习中` : '森里 · 学习计时';
     renderRecords(now);
+    renderCalendar(now);
   }
   function render() {
     const running = status === 'running', paused = status === 'paused', locked = hasSession();
@@ -167,10 +314,13 @@
       button.setAttribute('aria-pressed', String(mode === name));
       button.setAttribute('aria-selected', String(mode === name));
     }
-    if ($('subject-select')) { $('subject-select').disabled = locked; $('subject-select').value = subject; }
+    if ($('subject-select')) { $('subject-select').disabled = locked; $('subject-select').value = subject; $('subject-select').title = locked ? '本次学习结束后可以更换或添加科目' : '选择科目，或在列表末尾添加自己的科目'; }
     if ($('pomodoro-minutes')) { $('pomodoro-minutes').disabled = locked; $('pomodoro-minutes').value = String(pomodoroMinutes); }
     const saveSettings = $('settings-form')?.querySelector('[type="submit"]');
     if (saveSettings) saveSettings.disabled = locked;
+    if ($('subject-name')) $('subject-name').disabled = locked;
+    const saveSubject = $('subject-form')?.querySelector('[type="submit"]');
+    if (saveSubject) saveSubject.disabled = locked;
     renderNavigation(); scheduleDeadline();
     document.dispatchEvent(new CustomEvent('study:state', {detail: {status}}));
     tick();
@@ -193,7 +343,9 @@
     const duration = currentElapsed(at);
     if (startedAt !== null) segments.push({start: startedAt, end: Math.max(startedAt, at)});
     if (duration >= 1000) {
-      records.unshift({duration, firstStartedAt: firstStartedAt ?? at, endedAt: at, segments, subject: subjectLabel(), mode});
+      const record = {duration, firstStartedAt: firstStartedAt ?? at, endedAt: at, segments, subject: subjectLabel(), mode};
+      for (const [date, value] of Object.entries(distributeRecord(record))) addDuration(dailyTotals, date, value);
+      records.unshift(record);
       records = records.slice(0, 200); recordsRevision++;
     }
     elapsed = 0; startedAt = null; firstStartedAt = null; segments = []; status = 'idle';
@@ -217,9 +369,36 @@
     mode = name; persist(); render();
   });
   on('subject-select', 'change', () => {
+    if ($('subject-select').value === addSubjectValue) { openSubjectDialog(); return; }
     if (!hasSession()) { subject = selectedSubject($('subject-select').value); persist(); }
     render();
   });
+  for (const id of ['subject-close', 'subject-cancel']) on(id, 'click', event => { event.preventDefault(); closeSubjectDialog(); });
+  on('subject-dialog', 'cancel', () => closeSubjectDialog());
+  on('subject-dialog', 'close', () => { if ($('subject-select')) $('subject-select').value = subject; });
+  on('subject-name', 'input', () => { text('subject-error', ''); $('subject-name').setCustomValidity(''); });
+  on('subject-name', 'invalid', () => text('subject-error', '请输入 1 到 30 个字的科目名称。'));
+  on('subject-form', 'submit', event => {
+    event.preventDefault();
+    if (hasSession()) { text('subject-error', '请先结束当前学习，再添加科目。'); return; }
+    const name = normalizeSubject($('subject-name')?.value || '');
+    if (!name || Array.from(name).length > 30 || subjectKey(name) === subjectKey(addSubjectValue)) {
+      const message = !name ? '请输入科目名称。' : Array.from(name).length > 30 ? '科目名称最多 30 个字。' : '请换一个科目名称。';
+      text('subject-error', message); $('subject-name')?.setCustomValidity(message); $('subject-name')?.reportValidity(); return;
+    }
+    const options = Array.from($('subject-select')?.options || []).filter(option => option.value && option.value !== addSubjectValue);
+    const duplicate = options.find(option => subjectKey(option.value) === subjectKey(name) || subjectKey(option.textContent) === subjectKey(name));
+    if (duplicate) subject = duplicate.value;
+    else { hydrateSubjects({customSubjects: [...customSubjects, name], subject: name}); subject = selectedSubject(name); }
+    persist(); render(); closeSubjectDialog();
+    const message = duplicate ? `已选择已有科目「${subjectLabel()}」。` : `已添加科目「${subjectLabel()}」。`;
+    say(message); if (duplicate) toast(message);
+  });
+  on('calendar-button', 'click', () => { if (!$('calendar-dialog')?.open) $('calendar-dialog')?.showModal(); showCalendarToday(); });
+  on('calendar-close', 'click', event => { event.preventDefault(); $('calendar-dialog')?.close(); });
+  on('calendar-prev', 'click', () => moveCalendarMonth(-1));
+  on('calendar-next', 'click', () => moveCalendarMonth(1));
+  on('calendar-today', 'click', () => showCalendarToday());
   for (const name of ['focus', 'records']) on(`nav-${name}`, 'click', event => { event.preventDefault(); view = name; renderNavigation(); });
   on('settings-button', 'click', () => {
     if ($('pomodoro-minutes')) { $('pomodoro-minutes').value = String(pomodoroMinutes); $('pomodoro-minutes').setCustomValidity(''); }
