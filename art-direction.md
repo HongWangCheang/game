@@ -7,3 +7,6 @@ Animation: running cycles walk 0-9s, sit/eat 9-16s; stopping blends into curled 
 
 # Reference fidelity revision
 User rejected simplified volumetric avatar and requires exact source appearance. User chose original image texture with 3D thickness over a fully orbitable inferred 3D reconstruction. New hero front texture uses supplied JPEG unchanged; traced silhouette + sculpted depth/extrusion, continuous puppet deformation and head-only sleeping texture adaptation. Front orthographic camera preserves source face/body ratios and colors with no tone mapping; view tilt limited and returns to front. Generated scene-only forest removes animal to avoid duplicate reference characters in background. Preserve study timer and private Site identity.
+
+# Golden forest page revision
+Restyled from the user's October 16 reference: warm sunlit forest backdrop, cream and gold framed panels, botanical sprig decoration, focus/records navigation, subject choice, functional 25-minute Pomodoro mode and duration settings. Original-image textured animal and existing learning records remain. All reference numbers are actual local totals, with no seeded 908-minute example. Browser controls, countdown deadlines, pause exclusion and responsive layout verified.
