@@ -17,28 +17,32 @@
     return dayKey(date.getTime()) === value ? date : null;
   };
   const addSubjectValue = '__add_subject__';
+  const manageSubjectValue = '__manage_subjects__';
+  const isSubjectAction = value => [addSubjectValue, manageSubjectValue].includes(subjectKey(String(value)));
+  const unclassifiedId = 'unclassified';
   const normalizeSubject = value => value.trim().replace(/\s+/gu, ' ');
   const subjectKey = value => normalizeSubject(value).normalize('NFKC').toLowerCase();
-  const defaultSubjects = Array.from($('subject-select')?.options || []).filter(option => option.value !== addSubjectValue).map(option => ({value: option.value, label: option.textContent}));
+  const defaultSubjects = Array.from($('subject-select')?.options || []).filter(option => !isSubjectAction(option.value)).map(option => ({value: option.value, label: option.textContent}));
   const cleanSubject = value => typeof value === 'string' ? value.trim().slice(0, 80) : '';
   const selectedSubject = value => {
     const select = $('subject-select');
-    if (!select) return value === addSubjectValue ? '' : cleanSubject(value);
-    const options = Array.from(select.options).filter(option => option.value !== addSubjectValue);
-    const match = value === addSubjectValue ? null : options.find(option => option.value === value) || (value ? options.find(option => subjectKey(option.value) === subjectKey(value) || subjectKey(option.textContent) === subjectKey(value)) : null);
-    return match ? match.value : defaultSubjects[0]?.value || '';
+    if (isSubjectAction(value)) return '';
+    const entry = findCatalog(value);
+    if (entry) return !entry.deleted || hasSession() ? entry.value : '';
+    return '';
   };
   const subjectLabel = () => {
     if (!subject) return '';
-    const select = $('subject-select');
-    const option = select && Array.from(select.options).find(item => item.value === subject);
-    return cleanSubject(option?.textContent || subject);
+    return findCatalog(subject)?.label || cleanSubject(subject);
   };
   let storageAvailable = true, saved;
   try { saved = JSON.parse(localStorage.getItem(key) || 'null'); } catch { storageAvailable = false; }
   let records = [], elapsed = 0, startedAt = null, firstStartedAt = null, segments = [];
   let dailyTotals = Object.create(null), customSubjects = [];
-  let mode = 'stopwatch', pomodoroMinutes = 25, subject = selectedSubject('');
+  let subjectCatalog = Object.create(null), subjectDailyTotals = Object.create(null), catalogAliases = new Map();
+  let catalogRevision = 0, subjectTotalsRevision = 0, managerCache = '', statsScope = 'all', statsCache = '', statsCompleted = new Map(), statsOrder = null;
+  const managerButtons = new Map(), statsRows = new Map();
+  let mode = 'stopwatch', pomodoroMinutes = 25, subject = '';
   let status = 'idle', view = 'focus', recordsRevision = 0, recordsCache = '';
   let toastTimeout, deadlineTimeout;
   const todayDate = new Date();
@@ -49,22 +53,90 @@
   const targetDuration = () => mode === 'pomodoro' ? pomodoroMinutes * 60000 : Infinity;
   const rawElapsed = (now = Date.now()) => elapsed + (startedAt === null ? 0 : Math.max(0, now - startedAt));
   const currentElapsed = (now = Date.now()) => Math.min(targetDuration(), rawElapsed(now));
-  function hydrateSubjects(data) {
+  function findCatalog(value) {
+    if (typeof value !== 'string' || !value || isSubjectAction(value)) return null;
+    const id = catalogAliases.get(subjectKey(value));
+    return id ? subjectCatalog[id] : null;
+  }
+  function ensureCatalog(value, label = value, custom = true) {
+    if (typeof value !== 'string') return null;
+    value = normalizeSubject(value); label = typeof label === 'string' ? normalizeSubject(label) : value;
+    if (!value || isSubjectAction(value) || Array.from(value).length > 80) return null;
+    const known = findCatalog(value);
+    if (known) return known;
+    const id = `subject:${subjectKey(value)}`;
+    const entry = {id, value, label: custom ? value : cleanSubject(label) || value, custom, deleted: false};
+    subjectCatalog[id] = entry; catalogAliases.set(subjectKey(value), id);
+    if (!custom && label) catalogAliases.set(subjectKey(label), id);
+    catalogRevision++;
+    return entry;
+  }
+  function refreshSubjectOptions() {
     const select = $('subject-select');
-    customSubjects = [];
-    const seen = new Set(defaultSubjects.flatMap(option => [subjectKey(option.label), subjectKey(option.value)]));
-    const add = (value, legacy = false) => {
-      if (typeof value !== 'string') return;
-      const name = normalizeSubject(value), folded = subjectKey(name);
-      if (!name || folded === subjectKey(addSubjectValue) || seen.has(folded) || Array.from(name).length > (legacy ? 80 : 30)) return;
-      seen.add(folded); customSubjects.push(name);
-    };
-    if (Array.isArray(data?.customSubjects)) data.customSubjects.forEach(value => add(value, true));
-    const previous = cleanSubject(data?.subject);
-    if (previous && !defaultSubjects.some(option => option.value === previous) && !customSubjects.includes(previous)) add(previous, true);
+    const entries = Object.values(subjectCatalog), currentId = findCatalog(subject)?.id;
+    customSubjects = entries.filter(entry => entry.custom).map(entry => entry.value);
     if (!select) return;
     const makeOption = (value, label) => { const option = document.createElement('option'); option.value = value; option.textContent = label; return option; };
-    select.replaceChildren(...defaultSubjects.map(option => makeOption(option.value, option.label)), ...customSubjects.map(name => makeOption(name, name)), makeOption(addSubjectValue, '+ 添加学习科目…'));
+    const placeholder = defaultSubjects.find(option => !option.value)?.label || '选择学习科目';
+    const options = entries.filter(entry => !entry.deleted || hasSession() && entry.id === currentId).map(entry => {
+      const option = makeOption(entry.value, entry.label); option.disabled = entry.deleted; return option;
+    });
+    select.replaceChildren(makeOption('', placeholder), ...options, makeOption(addSubjectValue, '+ 添加学习科目…'));
+    select.value = subject;
+  }
+  function hydrateSubjects(data) {
+    subjectCatalog = Object.create(null); catalogAliases = new Map(); catalogRevision++;
+    for (const option of defaultSubjects) if (option.value) ensureCatalog(option.value, option.label, false);
+    if (data?.subjectCatalog && typeof data.subjectCatalog === 'object' && !Array.isArray(data.subjectCatalog)) {
+      for (const stored of Object.values(data.subjectCatalog)) {
+        if (!stored || typeof stored.value !== 'string') continue;
+        const entry = ensureCatalog(stored.value, stored.label, stored.custom !== false);
+        if (entry) entry.deleted = stored.deleted === true;
+      }
+    }
+    if (Array.isArray(data?.customSubjects)) for (const value of data.customSubjects) ensureCatalog(value);
+    if (data?.subject) ensureCatalog(cleanSubject(data.subject));
+    refreshSubjectOptions();
+  }
+  const currentSubjectId = () => findCatalog(subject)?.id || unclassifiedId;
+  function recordSubjectId(record) {
+    if (record.subjectId === unclassifiedId) return unclassifiedId;
+    if (typeof record.subjectId === 'string' && record.subjectId.startsWith('subject:')) {
+      const value = record.subjectId.slice(8), entry = ensureCatalog(value);
+      if (entry) return entry.id;
+    }
+    return ensureCatalog(cleanSubject(record.subject))?.id || unclassifiedId;
+  }
+  function subjectBucket(id, label) {
+    if (!subjectDailyTotals[id]) subjectDailyTotals[id] = {label: id === unclassifiedId ? '未分类' : label || subjectCatalog[id]?.label || id.slice(8), days: Object.create(null)};
+    return subjectDailyTotals[id];
+  }
+  function loadSubjectTotals(data, existingRecords) {
+    subjectDailyTotals = Object.create(null);
+    if (data?.subjectDailyTotals && typeof data.subjectDailyTotals === 'object' && !Array.isArray(data.subjectDailyTotals)) {
+      for (const [savedId, stored] of Object.entries(data.subjectDailyTotals)) {
+        if (!stored || !stored.days || typeof stored.days !== 'object' || Array.isArray(stored.days)) continue;
+        const id = savedId === unclassifiedId ? unclassifiedId : recordSubjectId({subjectId: savedId, subject: stored.label});
+        const bucket = subjectBucket(id, cleanSubject(stored.label));
+        for (const [date, value] of Object.entries(stored.days)) if (dateFromKey(date) && Number.isFinite(value) && value >= 0) addDuration(bucket.days, date, value);
+      }
+    }
+    if (data?.subjectDailyTotalsVersion !== 1) {
+      const seeded = Object.create(null);
+      for (const record of existingRecords) {
+        const id = recordSubjectId(record);
+        if (!seeded[id]) seeded[id] = Object.create(null);
+        for (const [date, value] of Object.entries(distributeRecord(record))) addDuration(seeded[id], date, value);
+      }
+      for (const [id, days] of Object.entries(seeded)) {
+        const bucket = subjectBucket(id);
+        for (const [date, value] of Object.entries(days)) bucket.days[date] = Math.max(bucket.days[date] || 0, value);
+      }
+    }
+    const attributed = Object.create(null);
+    for (const bucket of Object.values(subjectDailyTotals)) for (const [date, value] of Object.entries(bucket.days)) addDuration(attributed, date, value);
+    for (const [date, value] of Object.entries(dailyTotals)) if (value > (attributed[date] || 0)) addDuration(subjectBucket(unclassifiedId).days, date, value - (attributed[date] || 0));
+    subjectTotalsRevision++;
   }
   function addDuration(totals, date, duration) {
     if (duration > 0) totals[date] = (totals[date] || 0) + duration;
@@ -107,22 +179,25 @@
     const existingRecords = Array.isArray(data?.records) ? data.records.filter(validRecord) : [];
     records = existingRecords.slice(0, 200);
     loadDailyTotals(data, existingRecords);
-    hydrateSubjects(data);
     elapsed = Number.isFinite(data?.elapsed) && data.elapsed >= 0 ? data.elapsed : 0;
     startedAt = validTime(data?.startedAt) && data.startedAt <= now ? data.startedAt : null;
     firstStartedAt = validTime(data?.firstStartedAt) ? data.firstStartedAt : null;
     segments = Array.isArray(data?.segments) ? data.segments.filter(validSegment) : [];
     mode = data?.mode === 'pomodoro' ? 'pomodoro' : 'stopwatch';
     pomodoroMinutes = validMinutes(data?.pomodoroMinutes) ? data.pomodoroMinutes : 25;
-    subject = selectedSubject(cleanSubject(data?.subject));
+    subject = cleanSubject(data?.subject);
     if (firstStartedAt === null && (startedAt !== null || elapsed > 0)) firstStartedAt = startedAt ?? now;
     status = startedAt !== null ? 'running' : firstStartedAt !== null || elapsed > 0 ? 'paused' : 'idle';
+    hydrateSubjects(data);
+    loadSubjectTotals(data, existingRecords);
+    subject = selectedSubject(subject);
+    refreshSubjectOptions();
     recordsRevision++;
   }
   loadState(saved);
   function persist() {
     try {
-      localStorage.setItem(key, JSON.stringify({records, elapsed, startedAt, firstStartedAt, segments, mode, pomodoroMinutes, subject, customSubjects, dailyTotals, dailyTotalsVersion: 1}));
+      localStorage.setItem(key, JSON.stringify({records, elapsed, startedAt, firstStartedAt, segments, mode, pomodoroMinutes, subject, customSubjects, dailyTotals, dailyTotalsVersion: 1, subjectCatalog, subjectDailyTotals, subjectDailyTotalsVersion: 1}));
       storageAvailable = true;
     } catch { storageAvailable = false; }
     text('storage-note', storageAvailable ? '记录保存在此设备' : '本次记录暂存于当前页面');
@@ -146,6 +221,99 @@
     const total = Math.floor(ms / 1000), hours = Math.floor(total / 3600), minutes = Math.floor(total / 60) % 60, seconds = total % 60;
     if (compact) return hours ? `${hours}时${minutes ? `${minutes}分` : ''}` : minutes ? `${minutes}分` : `${seconds}秒`;
     return [hours ? `${hours} 小时` : '', hours || minutes ? `${minutes} 分钟` : '', `${seconds} 秒`].filter(Boolean).join(' ');
+  }
+  function renderSubjectStats(now = Date.now()) {
+    const list = $('subject-stats-list');
+    if (!list) return;
+    const today = dayKey(now), cache = `${subjectTotalsRevision}:${statsScope}:${today}`;
+    if (cache !== statsCache) {
+      statsCache = cache; statsCompleted = new Map();
+      for (const [id, bucket] of Object.entries(subjectDailyTotals)) statsCompleted.set(id, statsScope === 'today' ? bucket.days[today] || 0 : Object.values(bucket.days).reduce((sum, value) => sum + value, 0));
+    }
+    const values = new Map(statsCompleted), currentId = currentSubjectId();
+    if (hasSession()) {
+      const days = activeDailyTotals(now), active = statsScope === 'today' ? days[today] || 0 : Object.values(days).reduce((sum, value) => sum + value, 0);
+      values.set(currentId, (values.get(currentId) || 0) + active);
+    }
+    for (const entry of Object.values(subjectCatalog)) if (!entry.deleted && !values.has(entry.id)) values.set(entry.id, 0);
+    const labelFor = id => id === unclassifiedId ? '未分类' : subjectCatalog[id]?.label || subjectDailyTotals[id]?.label || id.slice(8);
+    const ids = [...values.keys()].filter(id => (values.get(id) || 0) > 0 || (id === unclassifiedId ? hasSession() && currentId === id : subjectCatalog[id] && !subjectCatalog[id].deleted)).sort((a, b) => labelFor(a).localeCompare(labelFor(b), 'zh-CN') || a.localeCompare(b));
+    const total = ids.reduce((sum, id) => sum + (values.get(id) || 0), 0);
+    text('subject-stats-total', calendarDuration(total)); text('subject-stats-count', String(ids.length));
+    for (const name of ['all', 'today']) {
+      const active = statsScope === name; $(`subject-stats-${name}`)?.classList.toggle('active', active);
+      $(`subject-stats-${name}`)?.setAttribute('aria-pressed', String(active)); $(`subject-stats-${name}`)?.setAttribute('aria-selected', String(active));
+    }
+    for (const id of ids) {
+      if (!statsRows.has(id)) {
+        const row = document.createElement('div'); row.className = 'subject-stat-row'; row.dataset.subjectId = id;
+        const heading = document.createElement('div'); heading.className = 'subject-stat-name';
+        const name = document.createElement('span');
+        const status = document.createElement('span'); status.className = 'subject-stat-status';
+        heading.append(name, status);
+        const duration = document.createElement('span'); duration.className = 'subject-stat-duration';
+        const share = document.createElement('span'); share.className = 'subject-stat-share';
+        const bar = document.createElement('div'); bar.className = 'subject-stat-bar'; bar.setAttribute('aria-hidden', 'true');
+        const fill = document.createElement('span'); fill.className = 'subject-stat-fill'; bar.append(fill);
+        row.append(heading, duration, bar, share); statsRows.set(id, {row, name, status, duration, share, fill});
+      }
+      const nodes = statsRows.get(id), value = values.get(id) || 0, deleted = subjectCatalog[id]?.deleted === true;
+      const stateLabel = deleted ? '已删除' : hasSession() && currentId === id ? status === 'paused' ? '本次已暂停' : '本次学习中' : '';
+      const percent = total > 0 ? Math.round(value / total * 1000) / 10 : 0;
+      const update = (node, value) => { if (node.textContent !== value) node.textContent = value; };
+      update(nodes.name, labelFor(id)); update(nodes.duration, calendarDuration(value)); update(nodes.share, `${percent}%`); update(nodes.status, stateLabel);
+      nodes.status.hidden = !stateLabel; nodes.fill.style.width = `${percent}%`;
+    }
+    const order = JSON.stringify(ids);
+    if (order !== statsOrder) {
+      statsOrder = order;
+      if (ids.length) list.replaceChildren(...ids.map(id => statsRows.get(id).row));
+      else { const empty = document.createElement('p'); empty.className = 'subject-stats-empty'; empty.textContent = '还没有科目时长，添加科目开始积累吧。'; list.replaceChildren(empty); }
+    }
+  }
+  function changeSubjectVisibility(id, restore) {
+    const entry = subjectCatalog[id];
+    if (!entry) return;
+    if (!restore && hasSession() && currentSubjectId() === id) { text('subjects-message', '请先结束本次学习，再删除当前科目。历史记录和时长会保留。'); return; }
+    entry.deleted = !restore; catalogRevision++;
+    if (!restore && findCatalog(subject)?.id === id && !hasSession()) subject = '';
+    refreshSubjectOptions(); persist(); render();
+    text('subjects-message', restore ? `已恢复「${entry.label}」，原有记录和时长仍然保留。` : `已删除「${entry.label}」的选择项，历史记录和时长会保留，可随时恢复。`);
+  }
+  function renderSubjectManager() {
+    if (!$('subjects-dialog')?.open) return;
+    const entries = Object.values(subjectCatalog), archived = entries.filter(entry => entry.deleted);
+    if ($('subjects-archived-section')) $('subjects-archived-section').hidden = archived.length === 0;
+    if (managerCache !== String(catalogRevision)) {
+      managerCache = String(catalogRevision); managerButtons.clear();
+      for (const deleted of [false, true]) {
+        const list = $(deleted ? 'subjects-archived-list' : 'subjects-active-list');
+        if (!list) continue;
+        const rows = entries.filter(entry => entry.deleted === deleted).map(entry => {
+          const row = document.createElement('div'); row.className = 'subject-manage-row'; row.dataset.subjectId = entry.id;
+          const name = document.createElement('span'); name.className = 'subject-manage-name'; name.textContent = entry.label;
+          const button = document.createElement('button'); button.type = 'button'; button.className = deleted ? 'subject-restore-button' : 'subject-delete-button'; button.textContent = deleted ? '恢复' : '删除';
+          button.setAttribute('aria-label', `${deleted ? '恢复' : '删除'}科目 ${entry.label}`);
+          button.addEventListener('click', () => changeSubjectVisibility(entry.id, deleted));
+          row.append(name, button); managerButtons.set(entry.id, button); return row;
+        });
+        if (rows.length) list.replaceChildren(...rows);
+        else { const message = document.createElement('p'); message.className = 'subject-manage-empty'; message.textContent = deleted ? '暂无已删除科目。' : '还没有可选科目，可以添加自己的学习科目。'; list.replaceChildren(message); }
+      }
+    }
+    for (const entry of entries) {
+      const button = managerButtons.get(entry.id);
+      if (!button) continue;
+      button.disabled = !entry.deleted && hasSession() && entry.id === currentSubjectId();
+      button.title = button.disabled ? '本次学习结束后可以删除当前科目，历史时长会保留' : entry.deleted ? '恢复此科目，原有时长会保留' : '隐藏此科目，历史记录和时长会保留';
+    }
+    if ($('subjects-add-button')) $('subjects-add-button').disabled = hasSession();
+  }
+  function openSubjectManager() {
+    if ($('subject-select')) $('subject-select').value = subject;
+    text('subjects-message', hasSession() ? '当前学习科目需结束后才能删除。其他科目的历史记录和时长会保留。' : '删除科目只隐藏选择项，历史记录和时长会保留，可随时恢复。');
+    if (!$('subjects-dialog')?.open) $('subjects-dialog')?.showModal();
+    renderSubjectManager();
   }
   function buildCalendarGrid() {
     const grid = $('calendar-grid');
@@ -287,6 +455,7 @@
     document.title = status === 'running' ? `${display} · 森里学习中` : '森里 · 学习计时';
     renderRecords(now);
     renderCalendar(now);
+    renderSubjectStats(now);
   }
   function render() {
     const running = status === 'running', paused = status === 'paused', locked = hasSession();
@@ -321,7 +490,7 @@
     if ($('subject-name')) $('subject-name').disabled = locked;
     const saveSubject = $('subject-form')?.querySelector('[type="submit"]');
     if (saveSubject) saveSubject.disabled = locked;
-    renderNavigation(); scheduleDeadline();
+    renderNavigation(); renderSubjectManager(); scheduleDeadline();
     document.dispatchEvent(new CustomEvent('study:state', {detail: {status}}));
     tick();
   }
@@ -343,8 +512,10 @@
     const duration = currentElapsed(at);
     if (startedAt !== null) segments.push({start: startedAt, end: Math.max(startedAt, at)});
     if (duration >= 1000) {
-      const record = {duration, firstStartedAt: firstStartedAt ?? at, endedAt: at, segments, subject: subjectLabel(), mode};
-      for (const [date, value] of Object.entries(distributeRecord(record))) addDuration(dailyTotals, date, value);
+      const record = {duration, firstStartedAt: firstStartedAt ?? at, endedAt: at, segments, subject: subjectLabel(), subjectId: currentSubjectId(), mode};
+      const bucket = subjectBucket(record.subjectId, record.subject);
+      for (const [date, value] of Object.entries(distributeRecord(record))) { addDuration(dailyTotals, date, value); addDuration(bucket.days, date, value); }
+      subjectTotalsRevision++;
       records.unshift(record);
       records = records.slice(0, 200); recordsRevision++;
     }
@@ -370,6 +541,7 @@
   });
   on('subject-select', 'change', () => {
     if ($('subject-select').value === addSubjectValue) { openSubjectDialog(); return; }
+    if ($('subject-select').value === manageSubjectValue) { openSubjectManager(); return; }
     if (!hasSession()) { subject = selectedSubject($('subject-select').value); persist(); }
     render();
   });
@@ -382,18 +554,22 @@
     event.preventDefault();
     if (hasSession()) { text('subject-error', '请先结束当前学习，再添加科目。'); return; }
     const name = normalizeSubject($('subject-name')?.value || '');
-    if (!name || Array.from(name).length > 30 || subjectKey(name) === subjectKey(addSubjectValue)) {
+    if (!name || Array.from(name).length > 30 || isSubjectAction(name)) {
       const message = !name ? '请输入科目名称。' : Array.from(name).length > 30 ? '科目名称最多 30 个字。' : '请换一个科目名称。';
       text('subject-error', message); $('subject-name')?.setCustomValidity(message); $('subject-name')?.reportValidity(); return;
     }
-    const options = Array.from($('subject-select')?.options || []).filter(option => option.value && option.value !== addSubjectValue);
-    const duplicate = options.find(option => subjectKey(option.value) === subjectKey(name) || subjectKey(option.textContent) === subjectKey(name));
-    if (duplicate) subject = duplicate.value;
-    else { hydrateSubjects({customSubjects: [...customSubjects, name], subject: name}); subject = selectedSubject(name); }
+    const duplicate = findCatalog(name), wasDeleted = duplicate?.deleted;
+    const entry = duplicate || ensureCatalog(name);
+    if (!entry) return;
+    entry.deleted = false; subject = entry.value; catalogRevision++; refreshSubjectOptions();
     persist(); render(); closeSubjectDialog();
-    const message = duplicate ? `已选择已有科目「${subjectLabel()}」。` : `已添加科目「${subjectLabel()}」。`;
+    const message = wasDeleted ? `已恢复科目「${subjectLabel()}」，原有时长仍然保留。` : duplicate ? `已选择已有科目「${subjectLabel()}」。` : `已添加科目「${subjectLabel()}」。`;
     say(message); if (duplicate) toast(message);
   });
+  for (const id of ['manage-subjects-button', 'records-manage-subjects']) on(id, 'click', () => openSubjectManager());
+  on('subjects-close', 'click', event => { event.preventDefault(); $('subjects-dialog')?.close(); });
+  on('subjects-add-button', 'click', () => { if (hasSession()) return; $('subjects-dialog')?.close(); openSubjectDialog(); });
+  for (const scope of ['all', 'today']) on(`subject-stats-${scope}`, 'click', () => { statsScope = scope; renderSubjectStats(); });
   on('calendar-button', 'click', () => { if (!$('calendar-dialog')?.open) $('calendar-dialog')?.showModal(); showCalendarToday(); });
   on('calendar-close', 'click', event => { event.preventDefault(); $('calendar-dialog')?.close(); });
   on('calendar-prev', 'click', () => moveCalendarMonth(-1));

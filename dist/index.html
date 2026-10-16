@@ -24,6 +24,7 @@
     <symbol id="i-reset" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0 0 5M20 4v6h-6"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></symbol>
     <symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3-.6 2.1-2 .9-2-.5-1.6 2.7 1.4 1.7-.2 2.3-1.4 1.5 1.6 2.8 2.2-.3 1.9 1.1.5 2.3h3.3l.8-2.2 2-.8 2.2.3 1.7-2.7-1.5-1.7.1-2.1 1.4-1.7-1.6-2.8-2.2.4-1.9-1L12.7 3Z"/><circle cx="10.8" cy="10.9" r="3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
   </defs></svg>
@@ -52,7 +53,7 @@
             <img class="panel-sprig panel-sprig-bottom" src="assets/botanical-sprig.svg" alt="" aria-hidden="true">
             <div class="timer-top"><h2>本次专注</h2><span class="state-pill" id="state-pill">准备开始</span></div>
             <div class="mode-switch" role="tablist" aria-label="计时方式"><button id="mode-stopwatch" class="active" role="tab" aria-selected="true" type="button">正计时</button><button id="mode-pomodoro" role="tab" aria-selected="false" type="button">番茄钟</button></div>
-            <div class="subject-picker"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><label class="sr-only" for="subject-select">学习科目</label><select id="subject-select"><option value="">选择学习科目</option><option value="阅读">阅读</option><option value="英语">英语</option><option value="数学">数学</option><option value="编程">编程</option><option value="其他">其他学习</option><option value="__add_subject__">＋ 添加学习科目…</option></select><svg class="icon subject-chevron" aria-hidden="true"><use href="#i-chevron"/></svg></div>
+            <div class="subject-picker"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><label class="sr-only" for="subject-select">学习科目</label><select id="subject-select"><option value="">选择学习科目</option><option value="阅读">阅读</option><option value="英语">英语</option><option value="数学">数学</option><option value="编程">编程</option><option value="其他">其他学习</option><option value="__add_subject__">＋ 添加学习科目…</option></select><svg class="icon subject-chevron" aria-hidden="true"><use href="#i-chevron"/></svg><button id="manage-subjects-button" class="subject-manage-button" type="button" aria-label="管理学习科目" aria-haspopup="dialog" aria-controls="subjects-dialog" title="添加、删除学习科目">管理</button></div>
             <div class="timer-dial"><div class="dial-ring" aria-hidden="true"></div><div class="dial-ticks" aria-hidden="true"></div><img class="dial-sprig dial-sprig-left" src="assets/botanical-sprig.svg" alt="" aria-hidden="true"><img class="dial-sprig dial-sprig-right" src="assets/botanical-sprig.svg" alt="" aria-hidden="true"><p class="sr-only" id="timer-kicker">你的专注时光</p><output class="timer" id="timer" aria-live="off" aria-label="本次学习时长">00:00:00</output><p class="timer-message" id="timer-message">每一分钟，都在慢慢积累</p></div>
             <div class="actions"><button class="start-button" id="toggle" type="button"><svg class="button-icon" id="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7Z"/></svg><span id="toggle-label">开始学习</span></button><button class="finish-button" id="finish" type="button"><svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg><span id="finish-label">重置</span></button></div>
             <p class="timer-tip"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>暂停时，小伙伴也会睡个小觉。</p>
@@ -60,7 +61,14 @@
         </div>
       </section>
       <section class="today-panel paper gold-frame" aria-labelledby="today-heading"><img class="today-sprig" src="assets/botanical-sprig.svg" alt="" aria-hidden="true"><div class="today-title"><span class="sun-icon"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></span><div><h2 id="today-heading">今天的积累</h2><p id="today-note">每一小段专注，都算数。</p></div></div><div class="stat"><span>学习时间</span><strong id="today-total">0<span> 分钟</span></strong></div><div class="stat"><span>完成学习</span><strong id="today-count">0<span> 次</span></strong></div><p class="today-aside"><img src="assets/botanical-sprig.svg" alt="" aria-hidden="true"><span>和小伙伴一起，慢慢进步。</span></p></section>
-      <section id="records-view" class="records-view paper gold-frame" aria-labelledby="sessions-heading" hidden><div class="section-heading"><div><p class="section-eyebrow">一点一滴，积攒成光</p><h2 id="sessions-heading">学习足迹</h2></div><span id="storage-note">记录保存在此设备</span></div><div id="sessions" class="sessions"><div class="empty-record"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><p>还没有学习记录，和小伙伴开始第一段专注吧。</p></div></div></section>
+      <section id="records-view" class="records-view paper gold-frame" aria-labelledby="sessions-heading" hidden>
+        <section class="subject-stats" id="subject-stats" aria-labelledby="subject-stats-heading">
+          <div class="subject-stats-heading"><div><p class="section-eyebrow">每一份努力，都有自己的去处</p><h2 id="subject-stats-heading">科目统计</h2></div><button id="records-manage-subjects" class="outline-button" type="button" aria-haspopup="dialog" aria-controls="subjects-dialog"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>管理科目</button></div>
+          <div class="subject-stats-toolbar"><div class="stats-range" role="tablist" aria-label="科目统计范围"><button id="subject-stats-all" type="button" role="tab" class="active" aria-selected="true">全部累计</button><button id="subject-stats-today" type="button" role="tab" aria-selected="false">今日</button></div><p class="subject-stats-overview">合计 <strong id="subject-stats-total">0 秒</strong><span class="overview-divider">·</span><span id="subject-stats-count">0</span> 个分类</p></div>
+          <div class="subject-stats-list" id="subject-stats-list" aria-label="按学习科目累计的时长"></div>
+          <p class="subject-stats-note">包含本次已累计的学习时间，暂停不计入。未选择科目或早期缺少科目信息的记录，计入「未分类」。</p>
+        </section>
+        <div class="section-heading history-heading"><div><p class="section-eyebrow">一点一滴，积攒成光</p><h2 id="sessions-heading">学习足迹</h2></div><span id="storage-note">记录保存在此设备</span></div><div id="sessions" class="sessions"><div class="empty-record"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><p>还没有学习记录，和小伙伴开始第一段专注吧。</p></div></div></section>
     </main>
     <footer><span></span><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><p>让专注，自然发生。</p><span></span></footer>
     <div class="toast" id="toast" role="status" aria-live="polite"></div><div class="sr-only" id="announcement" aria-live="polite"></div>
@@ -81,6 +89,16 @@
     <div class="dialog-heading"><h2 id="subject-heading">添加学习科目</h2><button class="icon-button" id="subject-close" type="button" aria-label="关闭添加科目"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
     <p class="dialog-note" id="subject-help">给这段专注起个名字，例如「高等数学」或「读书」。</p>
     <form id="subject-form"><label for="subject-name">科目名称</label><input id="subject-name" name="subject" type="text" placeholder="输入你想学习的科目" maxlength="60" required autocomplete="off"><p class="subject-error" id="subject-error" role="alert"></p><p class="subject-hint">最多 30 个字符，添加后会保留在科目列表中。</p><div class="subject-actions"><button class="finish-button" id="subject-cancel" type="button">取消</button><button class="start-button" type="submit">添加并选择</button></div></form>
+  </dialog>
+
+  <dialog id="subjects-dialog" aria-labelledby="subjects-heading" aria-describedby="subjects-help">
+    <div class="dialog-heading"><h2 id="subjects-heading">管理学习科目</h2><button class="icon-button" id="subjects-close" type="button" aria-label="关闭科目管理"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <p class="dialog-note" id="subjects-help">把想学的事放进列表，一点一点积累。</p>
+    <button class="manager-add-button" id="subjects-add-button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>添加科目</button>
+    <p id="subjects-message" class="subjects-message" role="status" aria-live="polite"></p>
+    <h3 class="subjects-list-heading">当前科目</h3><div id="subjects-active-list" class="subjects-manage-list"></div>
+    <details id="subjects-archived-section" class="subjects-archive" hidden><summary>已删除的科目（可恢复）</summary><div id="subjects-archived-list" class="subjects-manage-list"></div></details>
+    <p class="subjects-retention-note"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><span>删除只会将科目移出选择列表，历史记录和累计时长都会保留。</span></p>
   </dialog>
 </body>
 </html>
