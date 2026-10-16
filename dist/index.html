@@ -3,51 +3,102 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f5eb">
-  <meta name="description" content="开始学习，唤醒森林里的小伙伴。暂停时让它休息，用安静的计时器记录每一段专注。">
-  <meta property="og:title" content="森里 · 学习计时">
-  <meta property="og:description" content="和森林里的小伙伴，一起积攒专注时光。">
+  <meta name="theme-color" content="#284b34">
+  <meta name="description" content="你专心学习，小伙伴静静陪你。在温暖的森林里，用正计时或番茄钟积攒每一段专注。">
+  <meta property="og:title" content="森里 · 让专注，自然发生">
+  <meta property="og:description" content="和你的森林伙伴一起，慢慢进步。">
   <title>森里 · 学习计时</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232e493a'/%3E%3Cpath d='M8 22C8 10 17 7 25 7c0 11-6 18-15 17m1-3L21 11' fill='%23dce8bb' stroke='%23dce8bb' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23244833'/%3E%3Cpath d='M8 23C8 11 17 7 25 7c0 11-6 18-15 17m1-3L21 11' fill='%23f6e5a8' stroke='%23f6e5a8' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preload" as="image" href="assets/golden-forest.jpeg">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
   <script src="companion-scene.js" type="module"></script>
 </head>
 <body>
+  <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M4 20C3 9 12 4 21 3c0 10-5 18-16 18" fill="currentColor" stroke="none"/><path d="m6 18 10-10" stroke="var(--leaf-vein,#fff7d7)" stroke-width="1.5"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-13 4h1m3 0h1m3 0h1m-9 4h1m3 0h1"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V12m7 8V5m7 15V9" stroke-width="3"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5C8 2 3 3 3 4v15c3-2 6-1 9 1 3-2 6-3 9-1V4c0-1-5-2-9 1Zm0 0v15"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0 0 5M20 4v6h-6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3-.6 2.1-2 .9-2-.5-1.6 2.7 1.4 1.7-.2 2.3-1.4 1.5 1.6 2.8 2.2-.3 1.9 1.1.5 2.3h3.3l.8-2.2 2-.8 2.2.3 1.7-2.7-1.5-1.7.1-2.1 1.4-1.7-1.6-2.8-2.2.4-1.9-1L12.7 3Z"/><circle cx="10.8" cy="10.9" r="3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  </defs></svg>
+  <div class="page-glow" aria-hidden="true"></div>
   <div class="app-shell">
-    <header class="header">
-      <a class="brand" href="./" aria-label="森里，学习计时首页"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18C5 7 13 4 21 4c0 10-6 17-14 16M8 17 17 8"/></svg></span><span>森里<span class="brand-sub">学习计时</span></span></a>
-      <div class="header-meta"><span id="date"></span><span class="prototype">原型体验</span></div>
+    <header class="header paper">
+      <a class="brand" href="./" aria-label="森里，学习计时首页"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg></span><span class="brand-name">森里</span><span class="brand-sub">学习计时</span></a>
+      <nav class="main-nav" aria-label="主导航"><button id="nav-focus" class="nav-button active" aria-pressed="true" type="button"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><span>专注空间</span></button><button id="nav-records" class="nav-button" aria-pressed="false" type="button"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span>学习记录</span></button></nav>
+      <div class="header-meta"><button class="icon-button calendar-trigger" id="calendar-button" type="button" aria-label="学习日历" aria-haspopup="dialog" aria-controls="calendar-dialog" title="学习日历"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg></button><span id="date"></span><button class="icon-button" id="settings-button" type="button" aria-label="计时设置"><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg></button></div>
     </header>
-
     <main>
-      <div class="page-heading"><div><p class="eyebrow">YOUR LITTLE STUDY COMPANION</p><h1>今天，也一起专注吧。</h1></div><p class="heading-note">把时间留给学习，把陪伴交给它。</p></div>
-      <section class="workspace" aria-label="学习计时器">
-        <div class="forest" id="forest" data-state="idle">
-          <div class="scene-images" aria-hidden="true"><img class="scene awake" src="assets/awake.jpeg" alt="" fetchpriority="high"><img class="scene sleeping" src="assets/sleeping.jpeg" alt="" fetchpriority="high"></div>
-          <div id="world-3d" class="world-3d"></div>
-          <div class="scene-shade" aria-hidden="true"></div>
-          <div class="speech" id="speech">我先眯一会儿…<span aria-hidden="true"></span></div>
-          <div class="sleep-letters" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div>
-          <div class="scene-caption"><span class="scene-icon" id="scene-icon" aria-hidden="true">☾</span><span id="animal-status">小伙伴正在休息</span></div>
-          <span class="scene-credit" id="view-hint">拖动看看它 · 3D 伙伴</span>
-          <span class="activity-label" id="activity-label">正在睡觉</span>
-        </div>
-
-        <div class="timer-panel">
-          <div class="timer-top"><span class="panel-label">本次学习</span><span class="state-pill" id="state-pill">准备开始</span></div>
-          <div class="timer-center"><p class="timer-kicker" id="timer-kicker">你的专注时光</p><output class="timer" id="timer" aria-live="off" aria-label="本次学习时长">00:00:00</output><p class="timer-message" id="timer-message">开始计时，叫醒你的森林伙伴。</p></div>
-          <div class="actions"><button class="start-button" id="toggle"><svg class="button-icon" id="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7Z"/></svg><span id="toggle-label">开始学习</span></button><button class="finish-button" id="finish" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1"/></svg>结束本次</button></div>
-          <p class="timer-tip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm0 4v4l3 2"/></svg>暂停时，小伙伴也会睡个小觉。</p>
+      <div class="page-heading"><div><h1>今天，也一起专注吧。</h1><p>你专心学习，小伙伴静静陪你。</p></div><img class="heading-sprig" src="assets/botanical-sprig.svg" alt="" aria-hidden="true"></div>
+      <section id="focus-view" aria-label="专注空间">
+        <div class="workspace">
+          <div class="forest gold-frame" id="forest" data-state="idle">
+            <div class="scene-images" aria-hidden="true"><img class="scene awake" src="assets/awake.jpeg" alt=""><img class="scene sleeping" src="assets/sleeping.jpeg" alt=""></div>
+            <div id="world-3d" class="world-3d"></div><div class="scene-shade" aria-hidden="true"></div>
+            <div class="speech" id="speech">我先眯一会儿…</div>
+            <div class="sleep-letters" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div>
+            <div class="scene-caption"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><span id="animal-status">开始学习，唤醒你的森林伙伴</span></div>
+            <span class="sr-only" id="scene-icon" aria-hidden="true">☾</span><span class="scene-credit" id="view-hint">轻拖看立体细节</span>
+            <span class="activity-label" id="activity-label">休息中</span>
+          </div>
+          <section class="timer-panel paper gold-frame" aria-label="学习计时器">
+            <img class="panel-sprig panel-sprig-top" src="assets/botanical-sprig.svg" alt="" aria-hidden="true">
+            <img class="panel-sprig panel-sprig-bottom" src="assets/botanical-sprig.svg" alt="" aria-hidden="true">
+            <div class="timer-top"><h2>本次专注</h2><span class="state-pill" id="state-pill">准备开始</span></div>
+            <div class="mode-switch" role="tablist" aria-label="计时方式"><button id="mode-stopwatch" class="active" role="tab" aria-selected="true" type="button">正计时</button><button id="mode-pomodoro" role="tab" aria-selected="false" type="button">番茄钟</button></div>
+            <div class="subject-picker"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><label class="sr-only" for="subject-select">学习科目</label><select id="subject-select"><option value="">选择学习科目</option><option value="阅读">阅读</option><option value="英语">英语</option><option value="数学">数学</option><option value="编程">编程</option><option value="其他">其他学习</option><option value="__add_subject__">＋ 添加学习科目…</option></select><svg class="icon subject-chevron" aria-hidden="true"><use href="#i-chevron"/></svg><button id="manage-subjects-button" class="subject-manage-button" type="button" aria-label="管理学习科目" aria-haspopup="dialog" aria-controls="subjects-dialog" title="添加、删除学习科目">管理</button></div>
+            <div class="timer-dial"><div class="dial-ring" aria-hidden="true"></div><div class="dial-ticks" aria-hidden="true"></div><img class="dial-sprig dial-sprig-left" src="assets/botanical-sprig.svg" alt="" aria-hidden="true"><img class="dial-sprig dial-sprig-right" src="assets/botanical-sprig.svg" alt="" aria-hidden="true"><p class="sr-only" id="timer-kicker">你的专注时光</p><output class="timer" id="timer" aria-live="off" aria-label="本次学习时长">00:00:00</output><p class="timer-message" id="timer-message">每一分钟，都在慢慢积累</p></div>
+            <div class="actions"><button class="start-button" id="toggle" type="button"><svg class="button-icon" id="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7Z"/></svg><span id="toggle-label">开始学习</span></button><button class="finish-button" id="finish" type="button"><svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg><span id="finish-label">重置</span></button></div>
+            <p class="timer-tip"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>暂停时，小伙伴也会睡个小觉。</p>
+          </section>
         </div>
       </section>
-
-      <section class="today-panel" aria-labelledby="today-heading"><div class="today-title"><span class="sun-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span><div><h2 id="today-heading">今天的积累</h2><p id="today-note">每一小段专注，都算数。</p></div></div><div class="stat"><span>学习时间</span><strong id="today-total">0<span> 分钟</span></strong></div><div class="stat"><span>完成学习</span><strong id="today-count">0<span> 次</span></strong></div></section>
-      <section class="sessions-section" aria-labelledby="sessions-heading"><div class="section-heading"><h2 id="sessions-heading">学习足迹</h2><span id="storage-note">记录保存在此设备</span></div><div id="sessions" class="sessions"><div class="empty-record"><span aria-hidden="true">◌</span><p>还没有完成的学习记录。开始你的第一段专注吧。</p></div></div></section>
+      <section class="today-panel paper gold-frame" aria-labelledby="today-heading"><img class="today-sprig" src="assets/botanical-sprig.svg" alt="" aria-hidden="true"><div class="today-title"><span class="sun-icon"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></span><div><h2 id="today-heading">今天的积累</h2><p id="today-note">每一小段专注，都算数。</p></div></div><div class="stat"><span>学习时间</span><strong id="today-total">0<span> 分钟</span></strong></div><div class="stat"><span>完成学习</span><strong id="today-count">0<span> 次</span></strong></div><p class="today-aside"><img src="assets/botanical-sprig.svg" alt="" aria-hidden="true"><span>和小伙伴一起，慢慢进步。</span></p></section>
+      <section id="records-view" class="records-view paper gold-frame" aria-labelledby="sessions-heading" hidden>
+        <section class="subject-stats" id="subject-stats" aria-labelledby="subject-stats-heading">
+          <div class="subject-stats-heading"><div><p class="section-eyebrow">每一份努力，都有自己的去处</p><h2 id="subject-stats-heading">科目统计</h2></div><button id="records-manage-subjects" class="outline-button" type="button" aria-haspopup="dialog" aria-controls="subjects-dialog"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>管理科目</button></div>
+          <div class="subject-stats-toolbar"><div class="stats-range" role="tablist" aria-label="科目统计范围"><button id="subject-stats-all" type="button" role="tab" class="active" aria-selected="true">全部累计</button><button id="subject-stats-today" type="button" role="tab" aria-selected="false">今日</button></div><p class="subject-stats-overview">合计 <strong id="subject-stats-total">0 秒</strong><span class="overview-divider">·</span><span id="subject-stats-count">0</span> 个分类</p></div>
+          <div class="subject-stats-list" id="subject-stats-list" aria-label="按学习科目累计的时长"></div>
+          <p class="subject-stats-note">包含本次已累计的学习时间，暂停不计入。未选择科目或早期缺少科目信息的记录，计入「未分类」。</p>
+        </section>
+        <div class="section-heading history-heading"><div><p class="section-eyebrow">一点一滴，积攒成光</p><h2 id="sessions-heading">学习足迹</h2></div><span id="storage-note">记录保存在此设备</span></div><div id="sessions" class="sessions"><div class="empty-record"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><p>还没有学习记录，和小伙伴开始第一段专注吧。</p></div></div></section>
     </main>
-    <footer>慢慢来，一次专注一点点。<span>森里</span></footer>
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <div class="sr-only" id="announcement" aria-live="polite"></div>
+    <footer><span></span><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><p>让专注，自然发生。</p><span></span></footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div><div class="sr-only" id="announcement" aria-live="polite"></div>
   </div>
+  <dialog id="settings-dialog" aria-labelledby="settings-heading"><div class="dialog-heading"><h2 id="settings-heading">给专注一点空间</h2><button class="icon-button" id="settings-close" type="button" aria-label="关闭设置"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div><p class="dialog-note">找到适合自己的节奏，慢慢来就好。</p><form id="settings-form"><label for="pomodoro-minutes">每次番茄钟时长</label><div class="duration-input"><input id="pomodoro-minutes" type="number" min="5" max="120" step="1" value="25" required><span>分钟</span></div><p class="settings-hint">可设置 5–120 分钟；本次学习结束后可以调整。</p><button class="start-button" type="submit">保存设置</button></form></dialog>
+
+  <dialog id="calendar-dialog" aria-labelledby="calendar-heading" aria-describedby="calendar-intro">
+    <div class="dialog-heading"><div class="calendar-title"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg><h2 id="calendar-heading">学习日历</h2></div><button class="icon-button" id="calendar-close" type="button" aria-label="关闭学习日历"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <p class="dialog-note" id="calendar-intro">把每天的专注，慢慢收藏起来。</p>
+    <div class="calendar-toolbar"><button class="icon-button calendar-prev" id="calendar-prev" type="button" aria-label="上个月"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button><h3 id="calendar-month" aria-live="polite"></h3><button class="icon-button" id="calendar-next" type="button" aria-label="下个月"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button><button class="calendar-today" id="calendar-today" type="button">今天</button></div>
+    <div class="calendar-month-summary">本月专注 <strong id="calendar-month-total">0 秒</strong></div>
+    <div class="calendar-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+    <div class="calendar-grid" id="calendar-grid" role="group" aria-label="选择日期"></div>
+    <div class="calendar-selection"><h3 id="calendar-selected-date"></h3><strong id="calendar-day-total">0 秒</strong><p id="calendar-day-note"></p></div>
+    <p class="calendar-footnote">每天自动累计，暂停时间不计入。</p>
+  </dialog>
+  <dialog id="subject-dialog" aria-labelledby="subject-heading" aria-describedby="subject-help">
+    <div class="dialog-heading"><h2 id="subject-heading">添加学习科目</h2><button class="icon-button" id="subject-close" type="button" aria-label="关闭添加科目"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <p class="dialog-note" id="subject-help">给这段专注起个名字，例如「高等数学」或「读书」。</p>
+    <form id="subject-form"><label for="subject-name">科目名称</label><input id="subject-name" name="subject" type="text" placeholder="输入你想学习的科目" maxlength="60" required autocomplete="off"><p class="subject-error" id="subject-error" role="alert"></p><p class="subject-hint">最多 30 个字符，添加后会保留在科目列表中。</p><div class="subject-actions"><button class="finish-button" id="subject-cancel" type="button">取消</button><button class="start-button" type="submit">添加并选择</button></div></form>
+  </dialog>
+
+  <dialog id="subjects-dialog" aria-labelledby="subjects-heading" aria-describedby="subjects-help">
+    <div class="dialog-heading"><h2 id="subjects-heading">管理学习科目</h2><button class="icon-button" id="subjects-close" type="button" aria-label="关闭科目管理"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <p class="dialog-note" id="subjects-help">把想学的事放进列表，一点一点积累。</p>
+    <button class="manager-add-button" id="subjects-add-button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>添加科目</button>
+    <p id="subjects-message" class="subjects-message" role="status" aria-live="polite"></p>
+    <h3 class="subjects-list-heading">当前科目</h3><div id="subjects-active-list" class="subjects-manage-list"></div>
+    <details id="subjects-archived-section" class="subjects-archive" hidden><summary>已删除的科目（可恢复）</summary><div id="subjects-archived-list" class="subjects-manage-list"></div></details>
+    <p class="subjects-retention-note"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><span>删除只会将科目移出选择列表，历史记录和累计时长都会保留。</span></p>
+  </dialog>
 </body>
 </html>

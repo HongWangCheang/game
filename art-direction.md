@@ -7,3 +7,12 @@ Animation: running cycles walk 0-9s, sit/eat 9-16s; stopping blends into curled 
 
 # Reference fidelity revision
 User rejected simplified volumetric avatar and requires exact source appearance. User chose original image texture with 3D thickness over a fully orbitable inferred 3D reconstruction. New hero front texture uses supplied JPEG unchanged; traced silhouette + sculpted depth/extrusion, continuous puppet deformation and head-only sleeping texture adaptation. Front orthographic camera preserves source face/body ratios and colors with no tone mapping; view tilt limited and returns to front. Generated scene-only forest removes animal to avoid duplicate reference characters in background. Preserve study timer and private Site identity.
+
+# Golden forest page revision
+Restyled from the user's October 16 reference: warm sunlit forest backdrop, cream and gold framed panels, botanical sprig decoration, focus/records navigation, subject choice, functional 25-minute Pomodoro mode and duration settings. Original-image textured animal and existing learning records remain. All reference numbers are actual local totals, with no seeded 908-minute example. Browser controls, countdown deadlines, pause exclusion and responsive layout verified.
+
+# Daily calendar and personal subjects
+Header calendar opens a monthly view with local-date study totals, current-session accumulation and date selection. A persisted daily ledger retains totals when detailed sessions pass the 200-record limit; one-time migration includes existing records and midnight/DST splitting. Subject selector supports adding personal names with safe text rendering, duplicate handling, cancellation and reload persistence. Existing timer, animation and local browser storage remain.
+
+# Subject duration statistics and catalog management
+Learning records now include cumulative and today subject totals, duration shares and an active-session overlay that excludes paused time. A per-subject daily ledger persists beyond the detailed-record cap and migrates legacy records, assigning unattributable daily residuals to unclassified. Dedicated management entry points support add, reversible delete and restore while retaining history; the current running or paused subject is locked until completion. Original artwork and forest styling are preserved.

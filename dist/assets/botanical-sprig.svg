@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="260" viewBox="0 0 160 260" fill="none">
+  <title>Sage and golden eucalyptus sprig</title>
+  <defs>
+    <linearGradient id="sage" x1="-13" y1="-25" x2="10" y2="-14" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#BDC29B"/>
+      <stop offset=".38" stop-color="#8F9F77"/>
+      <stop offset=".7" stop-color="#6D8463"/>
+      <stop offset="1" stop-color="#56715A"/>
+    </linearGradient>
+    <linearGradient id="sageLight" x1="-12" y1="-30" x2="10" y2="-8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D7D3A2"/>
+      <stop offset=".42" stop-color="#A6B08A"/>
+      <stop offset="1" stop-color="#738C6A"/>
+    </linearGradient>
+    <linearGradient id="ochre" x1="-9" y1="-28" x2="10" y2="-8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5E8B5"/>
+      <stop offset=".45" stop-color="#DFC982"/>
+      <stop offset=".78" stop-color="#C3A45B"/>
+      <stop offset="1" stop-color="#D7BE76"/>
+    </linearGradient>
+    <linearGradient id="stem" x1="21" y1="247" x2="135" y2="18" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9B804B"/>
+      <stop offset=".47" stop-color="#B99A55"/>
+      <stop offset="1" stop-color="#D9BF77"/>
+    </linearGradient>
+    <filter id="paper" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".66" numOctaves="2" seed="17" result="grain"/>
+      <feColorMatrix in="grain" type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0" intercept=".065"/>
+      </feComponentTransfer>
+      <feComposite in2="SourceAlpha" operator="in" result="paperGrain"/>
+      <feBlend in="SourceGraphic" in2="paperGrain" mode="multiply"/>
+    </filter>
+    <path id="leaf" d="M0 0C-9.7-4.1-15.1-15.6-10.9-26.2C-8.8-31.8-4.5-36.5-1.2-40.7C4.1-36.3 10.5-31.5 11.1-23.2C12.3-12.8 6.4-4.2 0 0Z"/>
+    <path id="narrowLeaf" d="M0 0C-6.8-5.4-9.4-14.4-6.3-22.4C-4.5-26.6-1.7-30.4.6-34.4C5.3-28.5 8.5-21.5 6.3-14.1C4.8-8.5 2.5-4.3 0 0Z"/>
+    <g id="veins" stroke="#E5D39B" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M0-.8C-.4-12.3-1.6-25.2-1.2-39" stroke-width=".7" opacity=".86"/>
+      <path d="M-.65-11.5C-4.1-14.2-6.8-16.1-9.6-17.9M-1-20.1C2.2-22.3 5.6-25.1 8.4-28.2M-1.3-26.5C-3.7-28.3-5.9-30.4-7-32.2" stroke-width=".48" opacity=".56"/>
+    </g>
+    <g id="goldVein" stroke="#F8EDC5" stroke-linecap="round" fill="none">
+      <path d="M0-.7C.1-9.6-.4-22.8.6-32.8" stroke-width=".72" opacity=".9"/>
+      <path d="M-.2-12.8L-5.8-19.6M.05-20.4L5.2-25.5" stroke-width=".45" opacity=".65"/>
+    </g>
+  </defs>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19.5 249C34.8 229.8 50.7 209.5 61.8 183.4C71.8 159.6 77.8 139.3 86.3 117.1C100.8 78.8 116.6 43.4 135.2 19" stroke="url(#stem)" stroke-width="1.65"/>
+    <path d="M37 225L29.9 217.5M49.8 207L59.5 201.1M62.1 182.6L53.7 173.8M74.6 153.7L83.7 146.5M83 126.4L74.8 117.1M95.4 95.6L104.2 90.9M108.4 68.9L102.3 61M121.1 43.1L127.2 36.4" stroke="url(#stem)" stroke-width=".95"/>
+    <g filter="url(#paper)">
+      <g transform="translate(38 222) rotate(-63) scale(.82 .88)">
+        <use href="#leaf" fill="url(#sageLight)"/>
+        <use href="#veins"/>
+      </g>
+      <g transform="translate(57 203) rotate(68) scale(.91 1.02)">
+        <use href="#leaf" fill="url(#sage)"/>
+        <use href="#veins"/>
+      </g>
+      <g transform="translate(46 214) rotate(95) scale(.66 .70)">
+        <use href="#narrowLeaf" fill="url(#ochre)"/>
+        <use href="#goldVein"/>
+      </g>
+      <g transform="translate(55 176) rotate(-55) scale(.97 1.05)">
+        <use href="#leaf" fill="url(#sage)"/>
+        <use href="#veins"/>
+      </g>
+      <g transform="translate(82 148) rotate(57) scale(.88 .98)">
+        <use href="#leaf" fill="url(#sageLight)"/>
+        <use href="#veins"/>
+      </g>
+      <g transform="translate(70 163) rotate(-77) scale(.76 .83)">
+        <use href="#narrowLeaf" fill="url(#ochre)"/>
+        <use href="#goldVein"/>
+      </g>
+      <g transform="translate(76 119) rotate(-48) scale(.88 1.03)">
+        <use href="#leaf" fill="url(#sage)"/>
+        <use href="#veins"/>
+      </g>
+      <g transform="translate(104 91) rotate(63) scale(.78 .94)">
+        <use href="#leaf" fill="url(#sageLight)"/>
+        <use href="#veins"/>
+      </g>
+      <g transform="translate(91 109) rotate(37) scale(.67 .77)">
+        <use href="#narrowLeaf" fill="url(#ochre)"/>
+        <use href="#goldVein"/>
+      </g>
+      <g transform="translate(103 63) rotate(-33) scale(.76 .87)">
+        <use href="#leaf" fill="url(#sageLight)"/>
+        <use href="#veins"/>
+      </g>
+      <g transform="translate(127 37) rotate(51) scale(.66 .75)">
+        <use href="#leaf" fill="url(#sage)"/>
+        <use href="#veins"/>
+      </g>
+      <g transform="translate(118 48) rotate(-51) scale(.59 .70)">
+        <use href="#narrowLeaf" fill="url(#ochre)"/>
+        <use href="#goldVein"/>
+      </g>
+      <g transform="translate(133 24) rotate(23) scale(.58 .68)">
+        <use href="#narrowLeaf" fill="url(#ochre)"/>
+        <use href="#goldVein"/>
+      </g>
+    </g>
+    <path d="M19.9 247.8C37.9 225.3 51.3 206.4 61.8 183.4" stroke="#E3D3A4" stroke-width=".48" opacity=".74"/>
+  </g>
+</svg>

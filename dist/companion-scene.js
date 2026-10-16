@@ -22,14 +22,14 @@ async function initialize(){
   scene.add(new THREE.HemisphereLight('#fff3da','#8c745a',1.8));
   const key=new THREE.DirectionalLight('#ffeed7',1.1);key.position.set(-3,5,6);scene.add(key);
   const loader=new THREE.TextureLoader();
-  const [awakeTexture,sleepTexture,backgroundTexture]=await Promise.all(['assets/awake.jpeg','assets/sleeping.jpeg','assets/forest-background.jpeg'].map(async url=>{
+  const [awakeTexture,sleepTexture,backgroundTexture]=await Promise.all(['assets/awake.jpeg','assets/sleeping.jpeg','assets/golden-forest.jpeg'].map(async url=>{
     const texture=await loader.loadAsync(url);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);return texture;
   }));
-  const backdrop=new THREE.Mesh(new THREE.PlaneGeometry(1408/184,768/184),new THREE.MeshBasicMaterial({map:backgroundTexture,toneMapped:false}));
-  backdrop.position.set((704-750)/184,314/184,-1.3);scene.add(backdrop);
+  const backdrop=new THREE.Mesh(new THREE.PlaneGeometry((768/184)*(1586/992),768/184),new THREE.MeshBasicMaterial({map:backgroundTexture,toneMapped:false}));
+  backdrop.position.set(0,314/184,-1.3);scene.add(backdrop);
   const contact=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:'#4d612b',transparent:true,opacity:.15,depthWrite:false}));
   contact.scale.set(1.15,.10,1);contact.position.set(0,.055,-.5);scene.add(contact);
-  const buddy=createCompanion(THREE,{awakeTexture,sleepTexture});scene.add(buddy.group);
+  const buddy=createCompanion(THREE,{awakeTexture,sleepTexture});buddy.group.scale.setScalar(.92);buddy.group.position.x=-.12;scene.add(buddy.group);
   let running=forest.dataset.state==='running';
   let activeTime=0,time=0,previous=performance.now(),lastMode='';
   let moveX=0,yaw=0,orbit=0,tilt=0,dragging=false,lastX=0,lastY=0;
@@ -51,13 +51,13 @@ async function initialize(){
   });
   const release=()=>dragging=false;canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
   document.addEventListener('study:state',event=>{const next=event.detail.status==='running';if(next&&!running)activeTime=0;running=next;});
-  const label=mode=>{activityLabel.textContent=mode==='walking'?'正在散步':mode==='eating'?'正在吃叶子':'正在睡觉';};
+  const label=mode=>{activityLabel.textContent=mode==='walking'?'散步中':mode==='eating'?'吃叶子':'休息中';};
   for(let i=0;i<70;i++)buddy.update(0,.06,state);
   renderer.render(scene,camera);forest.classList.add('is-3d','reference-model');
   document.getElementById('view-hint').textContent='轻拖看立体细节';
   const frame=now=>{
     requestAnimationFrame(frame);
-    const dt=Math.min((now-previous)/1000,.06);previous=now;if(document.hidden)return;
+    const dt=Math.min((now-previous)/1000,.06);previous=now;if(document.hidden||!mount.clientWidth||!mount.clientHeight)return;
     time+=dt;if(running)activeTime+=dt;
     const cycle=activeTime%20;
     // Start with the reference pose, then waddle and nibble without changing identity.
@@ -68,9 +68,9 @@ async function initialize(){
     const travel=state.mode==='walking'?Math.sin((cycle-3)*.75)*.42:0;
     moveX=THREE.MathUtils.lerp(moveX,travel,smooth);
     yaw=THREE.MathUtils.lerp(yaw,state.mode==='walking'?Math.cos((cycle-3)*.75)*.055:0,smooth);
-    buddy.group.position.x=moveX;buddy.group.rotation.y=yaw;
+    buddy.group.position.x=moveX-.12;buddy.group.rotation.y=yaw;
     buddy.update(reduced?0:time,dt,state);
-    contact.position.x=moveX;contact.scale.x=1.15+(running?0:.02*Math.sin(time*1.6));
+    contact.position.x=moveX-.12;contact.scale.x=1.15+(running?0:.02*Math.sin(time*1.6));
     if(!dragging&&(Math.abs(orbit)>.0001||Math.abs(tilt)>.0001)){orbit=THREE.MathUtils.lerp(orbit,0,smooth*.35);tilt=THREE.MathUtils.lerp(tilt,0,smooth*.35);updateCamera();}
     renderer.render(scene,camera);
     mount.dataset.activity=state.mode;mount.dataset.motionTime=time.toFixed(2);
