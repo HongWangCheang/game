@@ -57,7 +57,7 @@ async function initialize(){
   document.getElementById('view-hint').textContent='轻拖看立体细节';
   const frame=now=>{
     requestAnimationFrame(frame);
-    const dt=Math.min((now-previous)/1000,.06);previous=now;if(document.hidden||!mount.clientWidth||!mount.clientHeight)return;
+    const dt=Math.min((now-previous)/1000,.06);previous=now;if(document.hidden||forest.dataset.scene==='sea'||!mount.clientWidth||!mount.clientHeight)return;
     time+=dt;if(running)activeTime+=dt;
     const cycle=activeTime%20;
     // Start with the reference pose, then waddle and nibble without changing identity.
