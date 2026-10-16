@@ -2,7 +2,7 @@
 
 用户指定的固定源码目录为 `/Users/unsio/Desktop/senli-study-companion`。后续所有功能、样式、图片和测试修改均在该目录完成；不要在旧工作区重新建立开发副本。
 
-- 保留 GitHub 仓库 `https://github.com/HongWangCheang/game.git` 及现有分支 `codex/senli-study-companion`。
+- 保留 GitHub 仓库 `https://github.com/HongWangCheang/game.git`，后续仅使用 `main` 分支；不再新建 `codex/senli-study-companion` 开发分支。
 - 本地运行：`python3 -m http.server 4173 --bind 127.0.0.1 --directory dist`。
 - 回归检查：`node tests/study-timer.test.cjs`（使用可用的 Node.js 运行时）。
 - 页面结构在 `dist/index.html`，逻辑在 `dist/app.js`，样式在 `dist/styles.css`；保留现有动画、学习记录迁移、日历、科目统计及删除恢复行为。
