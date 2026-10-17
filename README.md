@@ -89,6 +89,14 @@ node tests/study-timer.test.cjs
 伙伴画面右下角的「切换场景」按钮可在森林袋熊和果冻海之间来回切换，选择会保存在当前浏览器。
 
 - 切换只改变画面，不会暂停、重置或影响正在进行的计时、科目和学习记录。
-- 果冻海同样跟随学习状态：学习时水母们游动、发光并吐泡泡，主角小水母睁眼；暂停或未开始时慢慢漂浮、闭眼休息。支持小角度拖动查看。
-- 果冻海在第一次切换时才加载；不显示的场景会停止渲染，节省电量。
-- 文件：`dist/jelly-sea-scene.js`（果冻海 Three.js 场景）、`dist/scene-switch.js`（切换按钮与状态联动）。
+- 果冻海来自 Blender 模型 `sea.blend`：透明果冻方块里有白沙、珊瑚、海星、贝壳、海胆、小丑鱼和蓝倒吊。
+- 果冻海同样跟随学习状态：学习时小鱼游动、气泡上升、果冻表面起伏；暂停或未开始时小鱼停在珊瑚旁轻轻浮动。开始或暂停时果冻会弹一下。可拖动转动方块。
+- 果冻海在第一次切换时才加载（约 3.4 MB）；不显示的场景会停止渲染，节省电量。
+- 文件：`dist/assets/jelly-sea.glb`（导出的模型）、`dist/jelly-sea-scene.js`（场景、材质与动画）、`dist/scene-switch.js`（切换按钮与状态联动）。`dist/vendor/` 新增 Three.js r180 配套的 `GLTFLoader.js`、`BufferGeometryUtils.js`、`RoomEnvironment.js` 和 `meshopt_decoder.module.js`（MIT）。
+
+### 从 sea.blend 重新导出
+
+1. 在 Blender 中应用全部修改器（几何节点、表皮、细分、实体化、倒角），删除背板、灯光和相机。
+2. 用 Cycles 把除果冻和气泡以外物体的漫射颜色（Diffuse → Color）烘焙到顶点色 `Col`；白沙再额外烘焙自发光并叠加进 `Col`，保留焦散光纹。
+3. 导出 GLB（Y 轴向上、导出当前顶点色、不含相机和灯光）。
+4. 用 `npx gltfpack -i jelly-sea.glb -o dist/assets/jelly-sea.glb -cc -noq -kn -km` 压缩，保留节点名和材质名；`jelly-sea-scene.js` 按这些名字识别果冻、小鱼和气泡，并重建自发光与果冻透射材质。

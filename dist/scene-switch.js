@@ -19,15 +19,15 @@ const studyStatus = () => forest.dataset.state || 'idle';
 
 function renderSeaText() {
   const status = studyStatus(), running = status === 'running', paused = status === 'paused';
-  seaSpeech.textContent = running ? '咕噜噜，我们陪你一起专注！' : paused ? '你休息，我们也漂一会儿…' : '果冻海静悄悄的…';
-  seaStatus.textContent = running ? '水母们正在陪你学习' : paused ? '水母们正在休息' : '开始学习，点亮果冻海';
-  if (!sea) { seaLabel.textContent = running ? '游动中' : '漂浮中'; return; }
-  seaLabel.textContent = seaMode === 'swimming' ? '游动中' : seaMode === 'bubbling' ? '吐泡泡' : '漂浮中';
+  seaSpeech.textContent = running ? '咕噜噜，小鱼陪你一起专注！' : paused ? '你休息，小鱼也歇一会儿…' : '果冻海静悄悄的…';
+  seaStatus.textContent = running ? '小鱼们正在陪你学习' : paused ? '小鱼们正在休息' : '开始学习，唤醒果冻海';
+  if (!sea) { seaLabel.textContent = running ? '游动中' : '休息中'; return; }
+  seaLabel.textContent = seaMode === 'swimming' ? '游动中' : seaMode === 'bubbling' ? '吐泡泡' : '休息中';
 }
 
 function loadSea() {
-  seaLoading ||= import('./jelly-sea-scene.js').then(({ createJellySea }) => {
-    sea = createJellySea(THREE, { mount, reduced });
+  seaLoading ||= import('./jelly-sea-scene.js').then(async ({ createJellySea }) => {
+    sea = await createJellySea(THREE, { mount, reduced });
     sea.setStatus(studyStatus());
     sea.snapAwake();
     sea.onActivity(mode => { seaMode = mode; renderSeaText(); });
