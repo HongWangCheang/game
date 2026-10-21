@@ -84,19 +84,12 @@ node tests/study-timer.test.cjs
 
 科目累计独立保存，不会随详细记录超过 200 条而丢失。早期无法归属到具体科目的时长归入「未分类」。
 
-## 果冻海场景切换
+## 季节切换
 
-伙伴画面右下角的「切换场景」按钮可在森林袋熊和果冻海之间来回切换，选择会保存在当前浏览器。
+伙伴画面右上角的季节按钮（原「吃叶子」状态标签的位置）可在春、夏、秋、冬之间循环切换，选择会保存在当前浏览器（`senli-season`）。
 
-- 切换只改变画面，不会暂停、重置或影响正在进行的计时、科目和学习记录。
-- 果冻海来自 Blender 模型 `sea.blend`：透明果冻方块里有白沙、珊瑚、海星、贝壳、海胆、小丑鱼和蓝倒吊。
-- 果冻海同样跟随学习状态：学习时小鱼游动、气泡上升、果冻表面起伏；暂停或未开始时小鱼停在珊瑚旁轻轻浮动。开始或暂停时果冻会弹一下。可拖动转动方块。
-- 果冻海在第一次切换时才加载（约 3.4 MB）；不显示的场景会停止渲染，节省电量。
-- 文件：`dist/assets/jelly-sea.glb`（导出的模型）、`dist/jelly-sea-scene.js`（场景、材质与动画）、`dist/scene-switch.js`（切换按钮与状态联动）。`dist/vendor/` 新增 Three.js r180 配套的 `GLTFLoader.js`、`BufferGeometryUtils.js`、`RoomEnvironment.js` 和 `meshopt_decoder.module.js`（MIT）。
-
-### 从 sea.blend 重新导出
-
-1. 在 Blender 中应用全部修改器（几何节点、表皮、细分、实体化、倒角），删除背板、灯光和相机。
-2. 用 Cycles 把除果冻和气泡以外物体的漫射颜色（Diffuse → Color）烘焙到顶点色 `Col`；白沙再额外烘焙自发光并叠加进 `Col`，保留焦散光纹。
-3. 导出 GLB（Y 轴向上、导出当前顶点色、不含相机和灯光）。
-4. 用 `npx gltfpack -i jelly-sea.glb -o dist/assets/jelly-sea.glb -cc -noq -kn -km` 压缩，保留节点名和材质名；`jelly-sea-scene.js` 按这些名字识别果冻、小鱼和气泡，并重建自发光与果冻透射材质。
+- 春、夏、秋只改变森林背景的色调，袋熊本身保持原色；切换时颜色平滑过渡。原图为夏天。
+- 冬天使用 `dist/assets/winter-forest.jpeg` 雪景图作为背景，并叠加飘落的雪花；陪伴框里的袋熊换成小企鹅。小企鹅来自 Blender 模型 `baby_penguin.blend`，用 Cycles 渲染（含绒毛）成 28 帧走路动画序列 `dist/assets/penguin-walk.webp`（7×4 排列）：散步时播放走路动画，其余时间站着呼吸、开心时蹦一下。冬天资源在第一次切到冬天时才加载。
+- 文件：`dist/season-switch.js`（按钮与保存），`dist/companion-scene.js`（背景着色器调色）。
+- 袋熊当前动作（散步中 / 吃叶子 / 休息中）仍保留给读屏器。
+- 果冻海场景已移除；Blender 源文件 `sea.blend` 保留在仓库中。

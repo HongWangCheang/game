@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
   <script src="companion-scene.js" type="module"></script>
-  <script src="scene-switch.js" type="module"></script>
+  <script src="season-switch.js" defer></script>
 </head>
 <body>
   <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -27,8 +27,7 @@
     <symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3-.6 2.1-2 .9-2-.5-1.6 2.7 1.4 1.7-.2 2.3-1.4 1.5 1.6 2.8 2.2-.3 1.9 1.1.5 2.3h3.3l.8-2.2 2-.8 2.2.3 1.7-2.7-1.5-1.7.1-2.1 1.4-1.7-1.6-2.8-2.2.4-1.9-1L12.7 3Z"/><circle cx="10.8" cy="10.9" r="3"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
-    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8.5h13.5M14 4.5l4 4-4 4M20 15.5H6.5M10 11.5l-4 4 4 4"/></symbol>
-    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 9c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/></symbol>
+    <symbol id="i-season" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7c-3 0-5 2-5 5m5 2c2.5 0 4.5 1.5 5 4M3.5 9.5 12 12l8.5-2.5"/></symbol>
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
   </defs></svg>
   <div class="page-glow" aria-hidden="true"></div>
@@ -42,17 +41,15 @@
       <div class="page-heading"><div><h1>今天，也一起专注吧。</h1><p>你专心学习，小伙伴静静陪你。</p></div><img class="heading-sprig" src="assets/botanical-sprig.svg" alt="" aria-hidden="true"></div>
       <section id="focus-view" aria-label="专注空间">
         <div class="workspace">
-          <div class="forest gold-frame" id="forest" data-state="idle" data-scene="forest">
+          <div class="forest gold-frame" id="forest" data-state="idle" data-season="summer">
             <div class="scene-images" aria-hidden="true"><img class="scene awake" src="assets/awake.jpeg" alt=""><img class="scene sleeping" src="assets/sleeping.jpeg" alt=""></div>
-            <div id="world-3d" class="world-3d"></div><div id="world-sea" class="world-sea" aria-hidden="true"></div><div class="scene-shade" aria-hidden="true"></div>
-            <div class="speech forest-only" id="speech">我先眯一会儿…</div>
-            <div class="sleep-letters forest-only" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div>
-            <div class="scene-caption forest-only"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><span id="animal-status">开始学习，唤醒你的森林伙伴</span></div>
-            <div class="speech sea-only" id="sea-speech">果冻海静悄悄的…</div>
-            <div class="scene-caption sea-only"><svg class="icon" aria-hidden="true"><use href="#i-wave"/></svg><span id="sea-status">开始学习，唤醒果冻海</span></div>
+            <div id="world-3d" class="world-3d"></div><div class="scene-shade" aria-hidden="true"></div>
+            <div class="speech" id="speech">我先眯一会儿…</div>
+            <div class="sleep-letters" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div>
+            <div class="scene-caption"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><span id="animal-status">开始学习，唤醒你的森林伙伴</span></div>
             <span class="sr-only" id="scene-icon" aria-hidden="true">☾</span><span class="scene-credit" id="view-hint">轻拖看立体细节</span>
-            <span class="activity-label forest-only" id="activity-label">休息中</span><span class="activity-label sea-only" id="sea-label">休息中</span>
-            <button class="scene-switch" id="scene-switch" type="button" aria-pressed="false" aria-label="切换场景：前往果冻海" title="切换场景：果冻海"><svg class="icon" aria-hidden="true"><use href="#i-swap"/></svg></button>
+            <span class="sr-only" id="activity-label" aria-live="off">休息中</span>
+            <button class="activity-label season-switch" id="season-switch" type="button" aria-label="切换季节，当前：夏天" title="切换季节"><svg class="icon" aria-hidden="true"><use href="#i-season"/></svg><span id="season-name">夏天</span></button>
           </div>
           <section class="timer-panel paper gold-frame" aria-label="学习计时器">
             <img class="panel-sprig panel-sprig-top" src="assets/botanical-sprig.svg" alt="" aria-hidden="true">
