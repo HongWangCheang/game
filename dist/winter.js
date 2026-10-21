@@ -1,23 +1,20 @@
-/** 冬天：网页背景飘雪，陪伴框显示实时 3D 的 Blender 小企鹅——开始学习后同步走路，停止学习时停下。 */
+/** 冬天：网页背景飘雪，陪伴框播放 Blender 小企鹅动画——学习时循环播放，停止学习时停在第一帧。 */
 (() => {
   const forest = document.getElementById('forest');
-  const mount = document.getElementById('world-winter');
+  const video = document.getElementById('world-winter');
   const canvas = document.getElementById('page-snow');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isWinter = () => forest.dataset.season === 'winter';
   let running = forest.dataset.state === 'running';
 
-  // 实时 3D 小企鹅在第一次切到冬天时才加载。
-  let penguin = null, loading = null;
   function syncPenguin() {
-    if (isWinter() && !loading) {
-      loading = import('./penguin-scene.js')
-        .then(({ createPenguinScene }) => createPenguinScene({ mount: mount, reduced }))
-        .then(scene => { penguin = scene; forest.classList.add('penguin-ready'); syncPenguin(); })
-        .catch(error => console.warn('Penguin scene unavailable', error));
+    if (isWinter() && running) {
+      if (video.preload === 'none') { video.preload = 'auto'; video.load(); }
+      video.play().catch(() => { /* 浏览器拒绝自动播放时停在第一帧 */ });
+    } else {
+      video.pause();
+      if (video.readyState > 0) video.currentTime = 0;
     }
-    penguin?.setActive(isWinter());
-    penguin?.setWalking(isWinter() && running);
   }
 
   const ctx = canvas.getContext('2d');
