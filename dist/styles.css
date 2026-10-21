@@ -35,7 +35,7 @@
 .forest[data-season=winter]{--season-accent:#6f9fbf}
 html[data-season=winter] body{background-image:url('assets/winter-forest.jpeg')}
 .page-snow{position:fixed;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;display:none}html[data-season=winter] .page-snow{display:block}
-.world-winter{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;visibility:hidden;transition:opacity .6s,visibility 0s .6s;background:#e9e4e2}
+.world-winter{position:absolute;inset:0;width:100%;height:100%;opacity:0;visibility:hidden;transition:opacity .6s,visibility 0s .6s;background:#e9e4e2}
 .forest[data-season=winter] .world-winter{opacity:1;visibility:visible;transition:opacity .6s}
 .forest[data-season=winter] .world-3d,.forest[data-season=winter] .scene-images{opacity:0;visibility:hidden}
-.forest[data-season=winter] .scene-credit{display:none}
+.world-winter canvas{width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y}.world-winter canvas:active{cursor:grabbing}
