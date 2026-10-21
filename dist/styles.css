@@ -32,4 +32,5 @@
 .forest[data-season=spring]{--season-filter:hue-rotate(15deg) brightness(1.05);--season-accent:#d8829b}
 .forest[data-season=summer]{--season-accent:#4f9a45}
 .forest[data-season=autumn]{--season-filter:sepia(.35) hue-rotate(-20deg) saturate(1.2);--season-accent:#c98a2c}
-.forest[data-season=winter]{--season-filter:saturate(.35) brightness(1.1);--season-accent:#6f9fbf}
+.forest[data-season=winter]:not(.is-3d) .scene-images{background:url(assets/winter-forest.jpeg) center/cover}.forest[data-season=winter]:not(.is-3d) .scene-images img{visibility:hidden}
+.forest[data-season=winter]{--season-accent:#6f9fbf}

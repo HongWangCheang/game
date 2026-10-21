@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import { createCompanion } from './companion-model.js';
-import { drawWinterBackdrop, createSnowfall } from './winter-scene.js';
+import { createSnowfall, createPenguin } from './winter-scene.js';
 
 const forest=document.getElementById('forest');
 const mount=document.getElementById('world-3d');
@@ -45,12 +45,20 @@ async function initialize(){
   const backdrop=new THREE.Mesh(new THREE.PlaneGeometry((768/184)*(1586/992),768/184),backdropMaterial);
   backdrop.position.set(0,314/184,-1.3);scene.add(backdrop);
   // 冬天使用单独绘制的雪景背景，并叠加飘雪，切换季节时淡入淡出。
-  const winterTexture=new THREE.CanvasTexture(drawWinterBackdrop());winterTexture.colorSpace=THREE.SRGBColorSpace;
-  const winterMaterial=new THREE.MeshBasicMaterial({map:winterTexture,toneMapped:false,transparent:true,opacity:0,depthWrite:false});
+  const winterMaterial=new THREE.MeshBasicMaterial({toneMapped:false,transparent:true,opacity:0,depthWrite:false});
   const winterBackdrop=new THREE.Mesh(backdrop.geometry,winterMaterial);winterBackdrop.position.set(0,314/184,-1.29);scene.add(winterBackdrop);
   const snow=createSnowfall(THREE,{width:(768/184)*(1586/992)*1.6,height:768/184+.4,centerY:314/184});scene.add(snow.points);
   const isWinter=()=>forest.dataset.season==='winter';
-  winterMaterial.opacity=snow.material.opacity=isWinter()?1:0;
+  // 冬天的雪景图和小企鹅序列帧在第一次切到冬天时才加载。
+  let penguin=null,winterLoading=null;
+  const loadWinter=()=>winterLoading||=Promise.all(['assets/winter-forest.jpeg','assets/penguin-walk.webp'].map(url=>loader.loadAsync(url))).then(([background,sheet])=>{
+    for(const texture of [background,sheet]){texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);}
+    winterMaterial.map=background;winterMaterial.needsUpdate=true;
+    penguin=createPenguin(THREE,sheet);penguin.setFrame(0);scene.add(penguin.mesh);
+  }).catch(error=>console.warn('Winter scene unavailable',error));
+  if(isWinter())loadWinter();
+  document.addEventListener('season:change',event=>{if(event.detail.season==='winter')loadWinter();});
+  winterMaterial.opacity=snow.material.opacity=0;
   const contact=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:'#4d612b',transparent:true,opacity:.15,depthWrite:false}));
   contact.scale.set(1.15,.10,1);contact.position.set(0,.055,-.5);scene.add(contact);
   const buddy=createCompanion(THREE,{awakeTexture,sleepTexture});buddy.group.scale.setScalar(.92);buddy.group.position.x=-.12;scene.add(buddy.group);
@@ -75,7 +83,7 @@ async function initialize(){
   });
   const release=()=>dragging=false;canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
   document.addEventListener('study:state',event=>{const next=event.detail.status==='running';if(next&&!running)activeTime=0;running=next;});
-  const label=mode=>{activityLabel.textContent=mode==='walking'?'散步中':mode==='eating'?'吃叶子':'休息中';};
+  const label=mode=>{activityLabel.textContent=mode==='walking'?'散步中':mode==='eating'?(isWinter()?'玩雪中':'吃叶子'):'休息中';};
   for(let i=0;i<70;i++)buddy.update(0,.06,state);
   renderer.render(scene,camera);forest.classList.add('is-3d','reference-model');
   document.getElementById('view-hint').textContent='轻拖看立体细节';
@@ -90,9 +98,20 @@ async function initialize(){
     if(lastMode!==state.mode){lastMode=state.mode;buddy.setActivity?.(state.mode);label(state.mode);}
     const smooth=1-Math.exp(-dt*4);
     seasonUniform.value.lerp(seasonTarget,reduced?1:1-Math.exp(-dt*3));
-    const winterFade=reduced?1:1-Math.exp(-dt*3),winterGoal=isWinter()?1:0;
+    const winterFade=reduced?1:1-Math.exp(-dt*3),winterGoal=isWinter()&&penguin?1:0;
     winterMaterial.opacity+=(winterGoal-winterMaterial.opacity)*winterFade;snow.material.opacity=winterMaterial.opacity*.95;
     winterBackdrop.visible=snow.points.visible=winterMaterial.opacity>.01;
+    // 冬天由小企鹅陪伴：散步时播放 Blender 里的走路动画，其余时间站着轻轻呼吸、开心地蹦一下。
+    buddy.group.visible=winterMaterial.opacity<.5;
+    if(penguin){
+      penguin.material.opacity=winterMaterial.opacity;penguin.mesh.visible=!buddy.group.visible;
+      const walking=state.mode==='walking'&&!reduced,sleeping=state.mode==='sleeping';
+      penguin.setFrame(walking?Math.floor(time*24):0);
+      const breath=reduced?0:Math.sin(time*(sleeping?1.4:2.2))*(sleeping?.018:.012);
+      const hop=state.mode==='eating'&&!reduced?Math.max(0,Math.sin(time*5))*.05:0;
+      penguin.mesh.position.set(buddy.group.position.x,hop,0);
+      penguin.mesh.scale.set(1-breath*.5,1+breath,1);penguin.mesh.rotation.z=sleeping&&!reduced?Math.sin(time*.7)*.03:0;
+    }
     if(snow.points.visible&&!reduced)snow.update(dt,time);
     const travel=state.mode==='walking'?Math.sin((cycle-3)*.75)*.42:0;
     moveX=THREE.MathUtils.lerp(moveX,travel,smooth);
