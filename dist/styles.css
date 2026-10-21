@@ -32,5 +32,10 @@
 .forest[data-season=spring]{--season-filter:hue-rotate(15deg) brightness(1.05);--season-accent:#d8829b}
 .forest[data-season=summer]{--season-accent:#4f9a45}
 .forest[data-season=autumn]{--season-filter:sepia(.35) hue-rotate(-20deg) saturate(1.2);--season-accent:#c98a2c}
-.forest[data-season=winter]:not(.is-3d) .scene-images{background:url(assets/winter-forest.jpeg) center/cover}.forest[data-season=winter]:not(.is-3d) .scene-images img{visibility:hidden}
 .forest[data-season=winter]{--season-accent:#6f9fbf}
+html[data-season=winter] body{background-image:url('assets/winter-forest.jpeg')}
+.page-snow{position:fixed;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;display:none}html[data-season=winter] .page-snow{display:block}
+.world-winter{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;visibility:hidden;transition:opacity .6s,visibility 0s .6s;background:#e9e4e2}
+.forest[data-season=winter] .world-winter{opacity:1;visibility:visible;transition:opacity .6s}
+.forest[data-season=winter] .world-3d,.forest[data-season=winter] .scene-images{opacity:0;visibility:hidden}
+.forest[data-season=winter] .scene-credit{display:none}

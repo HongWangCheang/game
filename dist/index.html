@@ -14,6 +14,7 @@
   <script src="app.js" defer></script>
   <script src="companion-scene.js" type="module"></script>
   <script src="season-switch.js" defer></script>
+  <script src="winter.js" defer></script>
 </head>
 <body>
   <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -30,7 +31,7 @@
     <symbol id="i-season" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7c-3 0-5 2-5 5m5 2c2.5 0 4.5 1.5 5 4M3.5 9.5 12 12l8.5-2.5"/></symbol>
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
   </defs></svg>
-  <div class="page-glow" aria-hidden="true"></div>
+  <canvas class="page-snow" id="page-snow" aria-hidden="true"></canvas><div class="page-glow" aria-hidden="true"></div>
   <div class="app-shell">
     <header class="header paper">
       <a class="brand" href="./" aria-label="森里，学习计时首页"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg></span><span class="brand-name">森里</span><span class="brand-sub">学习计时</span></a>
@@ -43,7 +44,7 @@
         <div class="workspace">
           <div class="forest gold-frame" id="forest" data-state="idle" data-season="summer">
             <div class="scene-images" aria-hidden="true"><img class="scene awake" src="assets/awake.jpeg" alt=""><img class="scene sleeping" src="assets/sleeping.jpeg" alt=""></div>
-            <div id="world-3d" class="world-3d"></div><div class="scene-shade" aria-hidden="true"></div>
+            <div id="world-3d" class="world-3d"></div><video id="world-winter" class="world-winter" muted loop playsinline preload="none" poster="assets/penguin-poster.jpeg" aria-label="冬天的小企鹅：学习时走路，停止学习时停下"><source src="assets/penguin-walk.webm" type="video/webm"><source src="assets/penguin-walk.mp4" type="video/mp4"></video><div class="scene-shade" aria-hidden="true"></div>
             <div class="speech" id="speech">我先眯一会儿…</div>
             <div class="sleep-letters" aria-hidden="true"><span>z</span><span>z</span><span>Z</span></div>
             <div class="scene-caption"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><span id="animal-status">开始学习，唤醒你的森林伙伴</span></div>

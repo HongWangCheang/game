@@ -89,7 +89,7 @@ node tests/study-timer.test.cjs
 伙伴画面右上角的季节按钮（原「吃叶子」状态标签的位置）可在春、夏、秋、冬之间循环切换，选择会保存在当前浏览器（`senli-season`）。
 
 - 春、夏、秋只改变森林背景的色调，袋熊本身保持原色；切换时颜色平滑过渡。原图为夏天。
-- 冬天使用 `dist/assets/winter-forest.jpeg` 雪景图作为背景，并叠加飘落的雪花；陪伴框里的袋熊换成小企鹅。小企鹅来自 Blender 模型 `baby_penguin.blend`，用 Cycles 渲染（含绒毛）成 28 帧走路动画序列 `dist/assets/penguin-walk.webp`（7×4 排列）：散步时播放走路动画，其余时间站着呼吸、开心时蹦一下。冬天资源在第一次切到冬天时才加载。
+- 冬天：整个网页背景换成 `dist/assets/winter-forest.jpeg` 雪景图，并有全屏飘雪（`dist/winter.js`）。陪伴框里显示 Blender 模型 `baby_penguin.blend` 的完整场景动画（用模型自带相机和 Cycles 渲染的 `Penguin_Walk`，28 帧，`dist/assets/penguin-walk.webm` / `.mp4`）：开始学习后循环播放，暂停或结束学习时停在第一帧。
 - 文件：`dist/season-switch.js`（按钮与保存），`dist/companion-scene.js`（背景着色器调色）。
 - 袋熊当前动作（散步中 / 吃叶子 / 休息中）仍保留给读屏器。
 - 果冻海场景已移除；Blender 源文件 `sea.blend` 保留在仓库中。

@@ -11,7 +11,7 @@
 
   function applySeason(season, { persist = true } = {}) {
     const entry = SEASONS.find(([key]) => key === season) || SEASONS[1];
-    forest.dataset.season = entry[0];
+    forest.dataset.season = document.documentElement.dataset.season = entry[0];
     name.textContent = entry[1];
     button.setAttribute('aria-label', `切换季节，当前：${entry[1]}`);
     if (persist) saveSeason(entry[0]);
