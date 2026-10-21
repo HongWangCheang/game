@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import { createCompanion } from './companion-model.js';
+import { drawWinterBackdrop, createSnowfall } from './winter-scene.js';
 
 const forest=document.getElementById('forest');
 const mount=document.getElementById('world-3d');
@@ -27,7 +28,7 @@ async function initialize(){
   }));
   const backdropMaterial=new THREE.MeshBasicMaterial({map:backgroundTexture,toneMapped:false});
   // 季节只改背景色调：袋熊保持原色。原图是夏天，其余季节在着色器里调色相、饱和度和雪色。
-  const SEASON_LOOKS={spring:[.06,.9,1.1,0],summer:[0,1,1,0],autumn:[-.2,1.35,1.02,0],winter:[0,.25,1.12,.38]};
+  const SEASON_LOOKS={spring:[.06,.9,1.1,0],summer:[0,1,1,0],autumn:[-.2,1.35,1.02,0],winter:[0,1,1,0]};
   const seasonUniform={value:new THREE.Vector4(...SEASON_LOOKS.summer)},seasonTarget=seasonUniform.value.clone();
   backdropMaterial.onBeforeCompile=shader=>{
     shader.uniforms.uSeason=seasonUniform;
@@ -43,6 +44,13 @@ async function initialize(){
   document.addEventListener('season:change',event=>applySeason(event.detail.season));
   const backdrop=new THREE.Mesh(new THREE.PlaneGeometry((768/184)*(1586/992),768/184),backdropMaterial);
   backdrop.position.set(0,314/184,-1.3);scene.add(backdrop);
+  // 冬天使用单独绘制的雪景背景，并叠加飘雪，切换季节时淡入淡出。
+  const winterTexture=new THREE.CanvasTexture(drawWinterBackdrop());winterTexture.colorSpace=THREE.SRGBColorSpace;
+  const winterMaterial=new THREE.MeshBasicMaterial({map:winterTexture,toneMapped:false,transparent:true,opacity:0,depthWrite:false});
+  const winterBackdrop=new THREE.Mesh(backdrop.geometry,winterMaterial);winterBackdrop.position.set(0,314/184,-1.29);scene.add(winterBackdrop);
+  const snow=createSnowfall(THREE,{width:(768/184)*(1586/992)*1.6,height:768/184+.4,centerY:314/184});scene.add(snow.points);
+  const isWinter=()=>forest.dataset.season==='winter';
+  winterMaterial.opacity=snow.material.opacity=isWinter()?1:0;
   const contact=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:'#4d612b',transparent:true,opacity:.15,depthWrite:false}));
   contact.scale.set(1.15,.10,1);contact.position.set(0,.055,-.5);scene.add(contact);
   const buddy=createCompanion(THREE,{awakeTexture,sleepTexture});buddy.group.scale.setScalar(.92);buddy.group.position.x=-.12;scene.add(buddy.group);
@@ -82,6 +90,10 @@ async function initialize(){
     if(lastMode!==state.mode){lastMode=state.mode;buddy.setActivity?.(state.mode);label(state.mode);}
     const smooth=1-Math.exp(-dt*4);
     seasonUniform.value.lerp(seasonTarget,reduced?1:1-Math.exp(-dt*3));
+    const winterFade=reduced?1:1-Math.exp(-dt*3),winterGoal=isWinter()?1:0;
+    winterMaterial.opacity+=(winterGoal-winterMaterial.opacity)*winterFade;snow.material.opacity=winterMaterial.opacity*.95;
+    winterBackdrop.visible=snow.points.visible=winterMaterial.opacity>.01;
+    if(snow.points.visible&&!reduced)snow.update(dt,time);
     const travel=state.mode==='walking'?Math.sin((cycle-3)*.75)*.42:0;
     moveX=THREE.MathUtils.lerp(moveX,travel,smooth);
     yaw=THREE.MathUtils.lerp(yaw,state.mode==='walking'?Math.cos((cycle-3)*.75)*.055:0,smooth);
