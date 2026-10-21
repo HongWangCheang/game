@@ -25,7 +25,23 @@ async function initialize(){
   const [awakeTexture,sleepTexture,backgroundTexture]=await Promise.all(['assets/awake.jpeg','assets/sleeping.jpeg','assets/golden-forest.jpeg'].map(async url=>{
     const texture=await loader.loadAsync(url);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);return texture;
   }));
-  const backdrop=new THREE.Mesh(new THREE.PlaneGeometry((768/184)*(1586/992),768/184),new THREE.MeshBasicMaterial({map:backgroundTexture,toneMapped:false}));
+  const backdropMaterial=new THREE.MeshBasicMaterial({map:backgroundTexture,toneMapped:false});
+  // 季节只改背景色调：袋熊保持原色。原图是夏天，其余季节在着色器里调色相、饱和度和雪色。
+  const SEASON_LOOKS={spring:[.06,.9,1.1,0],summer:[0,1,1,0],autumn:[-.2,1.35,1.02,0],winter:[0,.25,1.12,.38]};
+  const seasonUniform={value:new THREE.Vector4(...SEASON_LOOKS.summer)},seasonTarget=seasonUniform.value.clone();
+  backdropMaterial.onBeforeCompile=shader=>{
+    shader.uniforms.uSeason=seasonUniform;
+    shader.fragmentShader='uniform vec4 uSeason;\n'+shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
+      vec3 c=diffuseColor.rgb;vec4 K=vec4(0.,-1./3.,2./3.,-1.);vec4 P=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));vec4 Q=mix(vec4(P.xyw,c.r),vec4(c.r,P.yzx),step(P.x,c.r));
+      float d=Q.x-min(Q.w,Q.y);vec3 hsv=vec3(abs(Q.z+(Q.w-Q.y)/(6.*d+1e-10)),d/(Q.x+1e-10),Q.x);
+      float greenish=smoothstep(.12,.2,hsv.x)*(1.-smoothstep(.42,.5,hsv.x));hsv.x=fract(hsv.x+uSeason.x*greenish);hsv.y=clamp(hsv.y*mix(1.,uSeason.y,greenish*.6+.4),0.,1.);
+      vec3 rgb=hsv.z*mix(vec3(1.),clamp(abs(fract(hsv.x+vec3(1.,2./3.,1./3.))*6.-3.)-1.,0.,1.),hsv.y)*uSeason.z;
+      diffuseColor.rgb=mix(rgb,vec3(.93,.96,1.),uSeason.w*smoothstep(.35,.9,hsv.z));`);
+  };
+  const applySeason=season=>seasonTarget.set(...(SEASON_LOOKS[season]||SEASON_LOOKS.summer));
+  applySeason(forest.dataset.season);seasonUniform.value.copy(seasonTarget);
+  document.addEventListener('season:change',event=>applySeason(event.detail.season));
+  const backdrop=new THREE.Mesh(new THREE.PlaneGeometry((768/184)*(1586/992),768/184),backdropMaterial);
   backdrop.position.set(0,314/184,-1.3);scene.add(backdrop);
   const contact=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:'#4d612b',transparent:true,opacity:.15,depthWrite:false}));
   contact.scale.set(1.15,.10,1);contact.position.set(0,.055,-.5);scene.add(contact);
@@ -57,7 +73,7 @@ async function initialize(){
   document.getElementById('view-hint').textContent='轻拖看立体细节';
   const frame=now=>{
     requestAnimationFrame(frame);
-    const dt=Math.min((now-previous)/1000,.06);previous=now;if(document.hidden||forest.dataset.scene==='sea'||!mount.clientWidth||!mount.clientHeight)return;
+    const dt=Math.min((now-previous)/1000,.06);previous=now;if(document.hidden||!mount.clientWidth||!mount.clientHeight)return;
     time+=dt;if(running)activeTime+=dt;
     const cycle=activeTime%20;
     // Start with the reference pose, then waddle and nibble without changing identity.
@@ -65,6 +81,7 @@ async function initialize(){
     if(reduced&&running)state.mode='eating';
     if(lastMode!==state.mode){lastMode=state.mode;buddy.setActivity?.(state.mode);label(state.mode);}
     const smooth=1-Math.exp(-dt*4);
+    seasonUniform.value.lerp(seasonTarget,reduced?1:1-Math.exp(-dt*3));
     const travel=state.mode==='walking'?Math.sin((cycle-3)*.75)*.42:0;
     moveX=THREE.MathUtils.lerp(moveX,travel,smooth);
     yaw=THREE.MathUtils.lerp(yaw,state.mode==='walking'?Math.cos((cycle-3)*.75)*.055:0,smooth);
