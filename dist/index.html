@@ -15,6 +15,7 @@
   <script src="companion-scene.js" type="module"></script>
   <script src="season-switch.js" defer></script>
   <script src="winter.js" defer></script>
+  <script src="desk-pet.js" defer></script>
 </head>
 <body>
   <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -104,5 +105,10 @@
     <details id="subjects-archived-section" class="subjects-archive" hidden><summary>已删除的科目（可恢复）</summary><div id="subjects-archived-list" class="subjects-manage-list"></div></details>
     <p class="subjects-retention-note"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><span>删除只会将科目移出选择列表，历史记录和累计时长都会保留。</span></p>
   </dialog>
+  <div id="desk-pet" class="desk-pet" hidden role="img" aria-label="桌宠小企鹅：学习时走路，暂停时坐下休息，可拖动">
+    <span class="desk-pet-bubble" aria-live="polite"></span>
+    <canvas width="192" height="192"></canvas>
+    <div class="desk-pet-tools"><button type="button" id="desk-pet-pip" hidden aria-label="弹出置顶小窗" title="弹出置顶小窗：切到别的软件时也能看到小企鹅">⧉</button><button type="button" id="desk-pet-hide" aria-label="收起桌宠" title="收起桌宠（下次开始学习时再出现）">×</button></div>
+  </div>
 </body>
 </html>

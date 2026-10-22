@@ -93,3 +93,12 @@ node tests/study-timer.test.cjs
 - 文件：`dist/season-switch.js`（按钮与保存），`dist/companion-scene.js`（背景着色器调色）。
 - 袋熊当前动作（散步中 / 吃叶子 / 休息中）仍保留给读屏器。
 - 果冻海场景已移除；Blender 源文件 `sea.blend` 保留在仓库中。
+
+## 桌宠小企鹅
+
+开始学习后，小企鹅从陪伴框跳出来变成桌宠（`dist/desk-pet.js`），浮在页面右下角一直陪着你；切换页面、滚动时都在。
+
+- 学习时走路，暂停时坐下休息，重置或结束本次学习后回到陪伴框。
+- 可拖动到任意位置，位置保存在当前浏览器（`senli-pet-position`）。点一下它会蹦一下并说句鼓励的话。
+- 悬停显示两个按钮：「⧉」置顶小窗（Chrome / Edge 116+ 的 Document Picture-in-Picture，切到别的软件也能看到它）和「×」收起（下次开始学习时再出现）。
+- 画面是 `baby_penguin.blend` 的 `Penguin_Walk` / `Penguin_Sit` 透明背景渲染序列帧：`dist/assets/pet-walk.webp`（28 帧，7 列）、`dist/assets/pet-sit.webp`（60 帧，10 列），每帧 192×192。
