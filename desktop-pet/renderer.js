@@ -3,6 +3,9 @@ const FPS = 24, SIT_DOWN_END = 11, WALK_SPEED = 42;
 const SHEETS = {
   walk: { src: 'assets/pet-walk.webp', frames: 28, columns: 7 },
   sit: { src: 'assets/pet-sit.webp', frames: 60, columns: 10 },
+  // 离开时的新动作：把渲染好的序列帧放到 assets/pet-away.webp，并按实际帧数修改 frames / columns。
+  // 文件不存在时，先用「坐下 + 说话」代替。
+  away: { src: 'assets/pet-away.webp', frames: 1, columns: 1, optional: true },
 };
 const canvas = document.getElementById('pet');
 const bubble = document.getElementById('bubble');
@@ -38,6 +41,24 @@ function setMode(next) {
 }
 
 // 只有在网站上学习时才走路陪你；暂停、结束学习或没在学习时都坐着休息。
+// 摄像头看不到你：小企鹅停下来做「找你」的动作；你回来后继续走路陪你学习。
+let away = false;
+window.addEventListener('face:presence', event => {
+  const wasAway = away;
+  away = !event.detail.present;
+  if (mode !== 'studying' && mode !== 'away') return;
+  if (away) {
+    mode = 'away'; walking = false;
+    if (SHEETS.away.image) play([['away', 0, SHEETS.away.frames - 1, true]]);
+    else sitAndRest();
+    say(pick(['你去哪儿啦？', '我在这儿等你～', '咦，人呢？']));
+  } else if (wasAway) {
+    setMode('studying');
+    say(pick(['欢迎回来！', '你回来啦，继续加油！']));
+  }
+});
+window.addEventListener('face:error', () => say('摄像头没打开，离开检测暂停了'));
+
 function onStudy(status) {
   if (status === 'running') { setMode('studying'); say(pick(['开始学习啦，我陪你！', '一起加油！'])); }
   else if (status === 'paused') setMode('sit');
@@ -130,7 +151,7 @@ window.pet.onStudy(onStudy);
 Promise.all(Object.values(SHEETS).map(sheet => new Promise((resolve, reject) => {
   const image = new Image();
   image.onload = () => { sheet.image = image; resolve(); };
-  image.onerror = reject;
+  image.onerror = () => sheet.optional ? resolve() : reject(new Error(`missing ${sheet.src}`));
   image.src = sheet.src;
 }))).then(() => {
   play([['sit', SIT_DOWN_END, 59, true]]);
