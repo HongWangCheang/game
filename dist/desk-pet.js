@@ -2,6 +2,7 @@
  * 桌宠小企鹅：网页里不显示；点「开始学习」后弹出一个总在最前面的小窗口，
  * 切到别的网页或软件（例如 Pages）时它也一直在旁边陪着你。
  * 学习时走路，暂停时坐下休息，重置或结束本次学习后自动收起。小窗口可以拖到屏幕任意位置。
+ * 如果电脑上开着 Mac 桌宠 App（desktop-pet/），学习状态会同步给 App，网页不再弹小窗口。
  * 画面来自 Blender 模型 baby_penguin.blend 的 Penguin_Walk / Penguin_Sit 透明背景序列帧。
  */
 (() => {
@@ -122,12 +123,31 @@
     summon.hidden = false;
     summon.addEventListener('click', () => pipWindow ? pipWindow.close() : openPip());
   }
+  // 和 Mac 桌宠 App（desktop-pet/）同步：App 在本机 127.0.0.1:47321 接收学习状态。
+  // 检测到 App 在运行时，由 App 里的小企鹅陪伴，网页就不再弹出小窗口，避免出现两只。
+  const BRIDGE = 'http://127.0.0.1:47321';
+  let desktopPet = false, heartbeat = 0;
+  const checkDesktopPet = () => fetch(`${BRIDGE}/hello`, { cache: 'no-store' })
+    .then(response => response.ok ? response.json() : null)
+    .then(data => { desktopPet = data?.app === 'senli-desktop-pet'; })
+    .catch(() => { desktopPet = false; });
+  const tellDesktopPet = () => fetch(`${BRIDGE}/study`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }), keepalive: true,
+  }).then(response => { desktopPet = response.ok; }).catch(() => { desktopPet = false; });
+  checkDesktopPet();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkDesktopPet(); });
+  window.addEventListener('pagehide', () => { if (desktopPet && status !== 'idle') { status = 'idle'; tellDesktopPet(); } });
+
   // 开始学习的那一下自动请小企鹅出来（捕获阶段，确保仍在这次点击里）。
   document.getElementById('toggle').addEventListener('click', () => {
-    if (status !== 'running' && status !== 'paused') openPip();
+    if (status !== 'running' && status !== 'paused' && !desktopPet) openPip();
   }, true);
 
   function sync(previous) {
+    // 学习中每 30 秒报一次平安，App 迟一点打开也能跟上；网页关掉后 App 会自动结束陪伴。
+    if (desktopPet || status !== 'idle') tellDesktopPet();
+    clearInterval(heartbeat);
+    if (status !== 'idle') heartbeat = setInterval(tellDesktopPet, 30000);
     if (status === 'idle') { pipWindow?.close(); return; }
     if (pipWindow) applyPose(previous);
   }
@@ -137,4 +157,5 @@
     status = event.detail.status;
     if (status !== previous) sync(previous);
   });
+  if (status !== 'idle') sync('idle');
 })();
