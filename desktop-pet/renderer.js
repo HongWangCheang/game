@@ -1,4 +1,4 @@
-// 小企鹅的动画和行为：散步时在屏幕底部走来走去，累了就坐下休息一会儿。
+// 小企鹅的动画和行为：网站上学习时在屏幕底部走路陪你，其余时间坐着休息；菜单里也可以让它自由散步。
 const FPS = 24, SIT_DOWN_END = 11, WALK_SPEED = 42;
 const SHEETS = {
   walk: { src: 'assets/pet-walk.webp', frames: 28, columns: 7 },
@@ -13,7 +13,7 @@ const LINES = {
   rest: ['休息一下～', '坐一会儿', '呼——'],
 };
 
-let mode = 'wander', clip = 'sit', frame = SIT_DOWN_END, queue = [], direction = -1;
+let mode = 'sit', clip = 'sit', frame = SIT_DOWN_END, queue = [], direction = -1;
 let phaseEnds = 0, walking = false, dragging = null, bubbleTimer = 0;
 const pick = list => list[Math.floor(Math.random() * list.length)];
 const seconds = (min, max) => performance.now() + (min + Math.random() * (max - min)) * 1000;
@@ -37,11 +37,11 @@ function setMode(next) {
   else { phaseEnds = 0; }
 }
 
-// 网站上开始学习：一直在屏幕底部走路陪你；暂停：坐下休息；结束本次学习：回到自由散步。
+// 只有在网站上学习时才走路陪你；暂停、结束学习或没在学习时都坐着休息。
 function onStudy(status) {
   if (status === 'running') { setMode('studying'); say(pick(['开始学习啦，我陪你！', '一起加油！'])); }
-  else if (status === 'paused') { setMode('sit'); }
-  else { setMode('wander'); say('学完啦，辛苦了！'); }
+  else if (status === 'paused') setMode('sit');
+  else { setMode('sit'); say('学完啦，辛苦了！'); }
 }
 
 // 散步模式：走 4–10 秒，坐下歇 6–15 秒，轮流进行。
@@ -134,7 +134,6 @@ Promise.all(Object.values(SHEETS).map(sheet => new Promise((resolve, reject) => 
   image.src = sheet.src;
 }))).then(() => {
   play([['sit', SIT_DOWN_END, 59, true]]);
-  phaseEnds = seconds(2, 4);
   draw();
   say(pick(LINES.hello));
   requestAnimationFrame(tick);

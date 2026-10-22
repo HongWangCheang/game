@@ -33,7 +33,7 @@ function createWindow() {
 
 function showMenu() {
   return Menu.buildFromTemplate([
-    { label: '散步', click: () => win.webContents.send('pet:mode', 'wander') },
+    { label: '自由散步', click: () => win.webContents.send('pet:mode', 'wander') },
     { label: '坐下休息', click: () => win.webContents.send('pet:mode', 'sit') },
     { label: '陪我学习（原地走路）', click: () => win.webContents.send('pet:mode', 'study') },
     { type: 'separator' },
@@ -127,5 +127,5 @@ http.createServer((req, res) => {
 }).on('error', error => console.warn('Study bridge unavailable', error.message))
   .listen(BRIDGE_PORT, '127.0.0.1');
 
-// 网站学习时每 30 秒报一次平安；网页被关掉、超过 90 秒没消息，就当作学习结束，小企鹅回去自由散步。
+// 网站学习时每 30 秒报一次平安；网页被关掉、超过 90 秒没消息，就当作学习结束，小企鹅坐下休息。
 setInterval(() => { if (studyStatus !== 'idle' && Date.now() - lastBeat > 90000) setStudyStatus('idle'); }, 15000);
