@@ -1,0 +1,40 @@
+{
+  "name": "senli-desktop-pet",
+  "productName": "Senli Penguin",
+  "version": "1.0.0",
+  "description": "森里学习计时的桌面宠物：透明背景的小企鹅，总在最前面，在屏幕底部散步、坐下休息。",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac zip --arm64 --x64"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.17.0"
+  },
+  "build": {
+    "appId": "site.senli.desktop-pet",
+    "productName": "Senli Penguin",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "renderer.js",
+      "assets/**"
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "icon": "assets/icon.png",
+      "extendInfo": {
+        "LSUIElement": true,
+        "CFBundleDisplayName": "森里小企鹅"
+      },
+      "artifactName": "SenliPenguin-${version}-${arch}-mac.${ext}"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "publish": null
+  }
+}
