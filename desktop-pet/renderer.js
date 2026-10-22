@@ -3,10 +3,10 @@ const FPS = 24, SIT_DOWN_END = 11, WALK_SPEED = 42;
 const SHEETS = {
   walk: { src: 'assets/pet-walk.webp', frames: 28, columns: 7 },
   sit: { src: 'assets/pet-sit.webp', frames: 60, columns: 10 },
-  // 离开时的新动作：把渲染好的序列帧放到 assets/pet-away.webp，并按实际帧数修改 frames / columns。
-  // 文件不存在时，先用「坐下 + 说话」代替。
-  away: { src: 'assets/pet-away.webp', frames: 1, columns: 1, optional: true },
+  // 愤怒模式（Blender 动作 Penguin_Angry）：前 ANGRY_LOOP_START 帧是生气起来的过程，之后循环生气的样子。
+  angry: { src: 'assets/pet-angry.webp', frames: 48, columns: 8 },
 };
+const ANGRY_LOOP_START = 11;
 const canvas = document.getElementById('pet');
 const bubble = document.getElementById('bubble');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -36,25 +36,27 @@ function setMode(next) {
   mode = next;
   if (next === 'sit') { walking = false; if (clip === 'walk') sitAndRest(); else play([['sit', SIT_DOWN_END, 59, true]]); say(pick(LINES.rest)); }
   else if (next === 'study') { walking = false; if (clip !== 'walk') standAndWalk(); say('陪你学习！'); }
-  else if (next === 'studying') { walking = true; if (clip !== 'walk') standAndWalk(); }
+  else if (next === 'studying') { walking = true; if (clip === 'angry') play([['walk', 0, 27, true]]); else if (clip !== 'walk') standAndWalk(); }
   else { phaseEnds = 0; }
 }
 
 // 只有在网站上学习时才走路陪你；暂停、结束学习或没在学习时都坐着休息。
-// 摄像头看不到你：小企鹅停下来做「找你」的动作；你回来后继续走路陪你学习。
+// 学习时摄像头看不到你：小企鹅停下来生气（愤怒模式）；你回来后消气，继续走路陪你学习。
 let away = false;
 window.addEventListener('face:presence', event => {
   const wasAway = away;
   away = !event.detail.present;
-  if (mode !== 'studying' && mode !== 'away') return;
+  if (mode !== 'studying' && mode !== 'angry') return;
+  const last = SHEETS.angry.frames - 1;
   if (away) {
-    mode = 'away'; walking = false;
-    if (SHEETS.away.image) play([['away', 0, SHEETS.away.frames - 1, true]]);
-    else sitAndRest();
-    say(pick(['你去哪儿啦？', '我在这儿等你～', '咦，人呢？']));
+    mode = 'angry'; walking = false;
+    play([['angry', 0, last, false], ['angry', ANGRY_LOOP_START, last, true]]);
+    say(pick(['哼！说好一起学习的呢？', '你跑哪儿去啦！', '快回来学习！']));
   } else if (wasAway) {
-    setMode('studying');
-    say(pick(['欢迎回来！', '你回来啦，继续加油！']));
+    // 先把生气的动作倒着播回去（消气），再接着走路。
+    mode = 'studying'; walking = true;
+    play([['angry', Math.min(frame, ANGRY_LOOP_START), 0, false], ['walk', 0, 27, true]]);
+    say(pick(['欢迎回来！这次原谅你～', '你回来啦，继续加油！']));
   }
 });
 window.addEventListener('face:error', () => say('摄像头没打开，离开检测暂停了'));
@@ -151,7 +153,7 @@ window.pet.onStudy(onStudy);
 Promise.all(Object.values(SHEETS).map(sheet => new Promise((resolve, reject) => {
   const image = new Image();
   image.onload = () => { sheet.image = image; resolve(); };
-  image.onerror = () => sheet.optional ? resolve() : reject(new Error(`missing ${sheet.src}`));
+  image.onerror = () => reject(new Error(`missing ${sheet.src}`));
   image.src = sheet.src;
 }))).then(() => {
   play([['sit', SIT_DOWN_END, 59, true]]);
