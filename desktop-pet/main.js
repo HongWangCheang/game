@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage } = require('electron');
 const path = require('node:path');
+const http = require('node:http');
 
 // 森里小企鹅：透明、无边框、总在最前面的桌面宠物窗口。
 const WIDTH = 200, HEIGHT = 230;
@@ -80,3 +81,53 @@ ipcMain.on('pet:drag-move', () => {
   win.setPosition(cursor.x - dragOffset.dx, cursor.y - dragOffset.dy);
 });
 ipcMain.on('pet:drag-end', () => { dragOffset = null; });
+
+// 和网站同步学习状态：网站在「开始学习 / 暂停 / 结束」时把状态发到本机 127.0.0.1:47321。
+// 只监听本机地址，只接受森里网站（线上和本地预览）的请求。
+const BRIDGE_PORT = 47321;
+const ALLOWED_ORIGINS = new Set([
+  'https://senli-study-companion.ramonecheang.chatgpt.site',
+  'http://127.0.0.1:4173', 'http://localhost:4173',
+]);
+let studyStatus = 'idle', lastBeat = 0;
+
+function setStudyStatus(status) {
+  lastBeat = Date.now();
+  if (status === studyStatus) return;
+  studyStatus = status;
+  win?.webContents.send('pet:study', status);
+}
+
+http.createServer((req, res) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    res.setHeader('Vary', 'Origin');
+  } else if (origin) { res.writeHead(403).end(); return; }
+  if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
+  if (req.method === 'GET' && req.url === '/hello') {
+    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ app: 'senli-desktop-pet', status: studyStatus }));
+    return;
+  }
+  if (req.method === 'POST' && req.url === '/study') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 256) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { status } = JSON.parse(body || '{}');
+        if (!['idle', 'running', 'paused'].includes(status)) throw new Error('bad status');
+        setStudyStatus(status);
+        res.writeHead(204).end();
+      } catch { res.writeHead(400).end(); }
+    });
+    return;
+  }
+  res.writeHead(404).end();
+}).on('error', error => console.warn('Study bridge unavailable', error.message))
+  .listen(BRIDGE_PORT, '127.0.0.1');
+
+// 网站学习时每 30 秒报一次平安；网页被关掉、超过 90 秒没消息，就当作学习结束，小企鹅回去自由散步。
+setInterval(() => { if (studyStatus !== 'idle' && Date.now() - lastBeat > 90000) setStudyStatus('idle'); }, 15000);

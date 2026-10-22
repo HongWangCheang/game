@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('pet', {
   dragMove: () => ipcRenderer.send('pet:drag-move'),
   dragEnd: () => ipcRenderer.send('pet:drag-end'),
   menu: () => ipcRenderer.send('pet:menu'),
+  onStudy: callback => ipcRenderer.on('pet:study', (_event, status) => callback(status)),
   onMode: callback => ipcRenderer.on('pet:mode', (_event, mode) => callback(mode)),
 });

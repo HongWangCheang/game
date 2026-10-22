@@ -33,12 +33,20 @@ function setMode(next) {
   mode = next;
   if (next === 'sit') { walking = false; if (clip === 'walk') sitAndRest(); else play([['sit', SIT_DOWN_END, 59, true]]); say(pick(LINES.rest)); }
   else if (next === 'study') { walking = false; if (clip !== 'walk') standAndWalk(); say('陪你学习！'); }
+  else if (next === 'studying') { walking = true; if (clip !== 'walk') standAndWalk(); }
   else { phaseEnds = 0; }
+}
+
+// 网站上开始学习：一直在屏幕底部走路陪你；暂停：坐下休息；结束本次学习：回到自由散步。
+function onStudy(status) {
+  if (status === 'running') { setMode('studying'); say(pick(['开始学习啦，我陪你！', '一起加油！'])); }
+  else if (status === 'paused') { setMode('sit'); }
+  else { setMode('wander'); say('学完啦，辛苦了！'); }
 }
 
 // 散步模式：走 4–10 秒，坐下歇 6–15 秒，轮流进行。
 function think(now) {
-  if (mode !== 'wander' || dragging || now < phaseEnds) return;
+  if (mode !== 'wander' || dragging || now < phaseEnds) return;  // 学习中（studying）一直走，不会自己坐下
   if (walking) {
     walking = false; sitAndRest(); phaseEnds = seconds(6, 15);
     if (Math.random() < .3) say(pick(LINES.rest));
@@ -117,6 +125,7 @@ canvas.addEventListener('pointerup', () => {
 });
 canvas.addEventListener('contextmenu', event => { event.preventDefault(); window.pet.menu(); });
 window.pet.onMode(setMode);
+window.pet.onStudy(onStudy);
 
 Promise.all(Object.values(SHEETS).map(sheet => new Promise((resolve, reject) => {
   const image = new Image();
