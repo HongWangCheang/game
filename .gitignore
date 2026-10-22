@@ -3,3 +3,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Mac 桌宠 App 及其安装包（体积太大，不提交）
+*.app/
+SenliPenguin-*.zip
