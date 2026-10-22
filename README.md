@@ -102,3 +102,7 @@ node tests/study-timer.test.cjs
 - 小窗口可以拖到屏幕任意位置；点小企鹅会蹦一下并说句鼓励的话；悬停出现「×」可收起。
 - 陪伴框右上角的 🐧 按钮可随时打开或收起桌宠（不支持的浏览器不显示）。
 - 画面是 `baby_penguin.blend` 的 `Penguin_Walk` / `Penguin_Sit` 透明背景渲染序列帧：`dist/assets/pet-walk.webp`（28 帧，7 列）、`dist/assets/pet-sit.webp`（60 帧，10 列），每帧 192×192。
+
+## 桌面宠物 App
+
+`desktop-pet/` 是独立的 Mac 桌宠小程序（Electron）：透明背景、总在最前面，不需要打开网站。安装和开发说明见 `desktop-pet/README.md`。
