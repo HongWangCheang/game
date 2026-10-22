@@ -21,20 +21,29 @@
       "preload.js",
       "index.html",
       "renderer.js",
-      "assets/**"
+      "assets/**",
+      "face.js"
     ],
     "mac": {
       "category": "public.app-category.education",
       "icon": "assets/icon.png",
       "extendInfo": {
         "LSUIElement": true,
-        "CFBundleDisplayName": "森里小企鹅"
+        "CFBundleDisplayName": "森里小企鹅",
+        "NSCameraUsageDescription": "学习时用摄像头看看你还在不在电脑前；画面只在本机处理，不会保存或上传。"
       },
       "artifactName": "SenliPenguin-${version}-${arch}-mac.${ext}"
     },
     "directories": {
       "output": "release"
     },
-    "publish": null
+    "publish": null,
+    "asarUnpack": [
+      "node_modules/@mediapipe/tasks-vision/wasm/**",
+      "assets/models/**"
+    ]
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "1.0.1"
   }
 }

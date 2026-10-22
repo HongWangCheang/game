@@ -1,10 +1,17 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage, systemPreferences } = require('electron');
+const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 
 // 森里小企鹅：透明、无边框、总在最前面的桌面宠物窗口。
 const WIDTH = 200, HEIGHT = 230;
 let win = null, tray = null, dragOffset = null;
+
+// 设置保存在用户数据目录（~/Library/Application Support/Senli Penguin/settings.json）。
+const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
+let settings = { faceDetection: true };
+function loadSettings() { try { settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsFile(), 'utf8')) }; } catch { /* 第一次运行用默认设置 */ } }
+function saveSettings() { try { fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2)); } catch (error) { console.warn('Settings not saved', error.message); } }
 
 function workArea() {
   return screen.getDisplayMatching(win ? win.getBounds() : { x: 0, y: 0, width: 1, height: 1 }).workArea;
@@ -37,6 +44,8 @@ function showMenu() {
     { label: '坐下休息', click: () => win.webContents.send('pet:mode', 'sit') },
     { label: '陪我学习（原地走路）', click: () => win.webContents.send('pet:mode', 'study') },
     { type: 'separator' },
+    { label: '离开检测（学习时用摄像头）', type: 'checkbox', checked: settings.faceDetection,
+      click: item => { settings.faceDetection = item.checked; saveSettings(); win.webContents.send('pet:face-setting', item.checked); } },
     { label: '回到右下角', click: () => { const p = homePosition(); win.setPosition(p.x, p.y); } },
     { label: '开机时自动启动', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin,
       click: item => app.setLoginItemSettings({ openAtLogin: item.checked }) },
@@ -46,6 +55,7 @@ function showMenu() {
 }
 
 app.whenReady().then(() => {
+  loadSettings();
   if (process.platform === 'darwin') app.dock.hide();
   createWindow();
   const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'trayIcon.png'));
@@ -56,6 +66,15 @@ app.whenReady().then(() => {
 });
 app.on('window-all-closed', () => app.quit());
 
+ipcMain.handle('pet:face-setting', () => settings.faceDetection);
+// macOS 第一次使用摄像头时会弹出系统授权窗口；用户拒绝后需要到「系统设置 → 隐私与安全性 → 摄像头」里打开。
+ipcMain.handle('pet:camera-access', async () => {
+  if (process.platform !== 'darwin') return true;
+  const status = systemPreferences.getMediaAccessStatus('camera');
+  if (status === 'granted') return true;
+  if (status === 'denied' || status === 'restricted') return false;
+  return systemPreferences.askForMediaAccess('camera');
+});
 ipcMain.on('pet:ignore-mouse', (_event, ignore) => win?.setIgnoreMouseEvents(ignore, { forward: true }));
 ipcMain.on('pet:menu', () => showMenu().popup({ window: win }));
 
