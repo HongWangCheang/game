@@ -96,9 +96,9 @@ node tests/study-timer.test.cjs
 
 ## 桌宠小企鹅
 
-开始学习后，小企鹅从陪伴框跳出来变成桌宠（`dist/desk-pet.js`），浮在页面右下角一直陪着你；切换页面、滚动时都在。
+网页里不显示桌宠。点「开始学习」的那一下，小企鹅会弹进一个总在所有软件最前面的小窗口（`dist/desk-pet.js`，Document Picture-in-Picture，Chrome / Edge 116+）；切到别的网页或软件（例如 Pages）时它一直在旁边陪着你。
 
-- 学习时走路，暂停时坐下休息，重置或结束本次学习后回到陪伴框。
-- 可拖动到任意位置，位置保存在当前浏览器（`senli-pet-position`）。点一下它会蹦一下并说句鼓励的话。
-- 悬停显示两个按钮：「⧉」置顶小窗（Chrome / Edge 116+ 的 Document Picture-in-Picture，切到别的软件也能看到它）和「×」收起（下次开始学习时再出现）。
+- 学习时走路，暂停时坐下休息，重置或结束本次学习后小窗口自动关闭。
+- 小窗口可以拖到屏幕任意位置；点小企鹅会蹦一下并说句鼓励的话；悬停出现「×」可收起。
+- 陪伴框右上角的 🐧 按钮可随时打开或收起桌宠（不支持的浏览器不显示）。
 - 画面是 `baby_penguin.blend` 的 `Penguin_Walk` / `Penguin_Sit` 透明背景渲染序列帧：`dist/assets/pet-walk.webp`（28 帧，7 列）、`dist/assets/pet-sit.webp`（60 帧，10 列），每帧 192×192。
