@@ -83,12 +83,10 @@ ipcMain.on('pet:drag-move', () => {
 ipcMain.on('pet:drag-end', () => { dragOffset = null; });
 
 // 和网站同步学习状态：网站在「开始学习 / 暂停 / 结束」时把状态发到本机 127.0.0.1:47321。
-// 只监听本机地址，只接受森里网站（线上和本地预览）的请求。
+// 只监听本机地址，只接受森里线上网站和本机预览页面（任意端口，例如 4173 或 VS Code Live Server 的 5500）的请求。
 const BRIDGE_PORT = 47321;
-const ALLOWED_ORIGINS = new Set([
-  'https://senli-study-companion.ramonecheang.chatgpt.site',
-  'http://127.0.0.1:4173', 'http://localhost:4173',
-]);
+const isAllowedOrigin = origin => origin === 'https://senli-study-companion.ramonecheang.chatgpt.site'
+  || /^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(origin);
 let studyStatus = 'idle', lastBeat = 0;
 
 function setStudyStatus(status) {
@@ -100,7 +98,7 @@ function setStudyStatus(status) {
 
 http.createServer((req, res) => {
   const origin = req.headers.origin;
-  if (origin && ALLOWED_ORIGINS.has(origin)) {
+  if (origin && isAllowedOrigin(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
