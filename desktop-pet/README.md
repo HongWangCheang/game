@@ -2,7 +2,7 @@
 
 透明背景、无边框、总在所有软件最前面的小企鹅桌宠（Electron）。不需要打开网站，切到 Google、Pages 或别的软件时它都一直在屏幕上。
 
-画面来自 `../baby_penguin.blend` 的 `Penguin_Walk` / `Penguin_Sit` 动作（Cycles 透明背景渲染，与网站 `dist/assets/pet-*.webp` 相同）。
+画面来自 `../baby_penguin.blend` 的 `Penguin_Walk` / `Penguin_Sit` / `Penguin_Angry` 动作（Cycles 透明背景渲染，与网站 `dist/assets/pet-*.webp` 相同）。
 
 ## 它会做什么
 
@@ -22,13 +22,13 @@ App 运行时，在森里网站上点「开始学习」，小企鹅会一直在�
 
 ## 离开检测（摄像头）
 
-在网站上学习时，App 会用摄像头看看你还在不在电脑前：连续 5 秒看不到人脸，小企鹅就停下来做「找你」的动作，并说「你去哪儿啦？」；你回来 1 秒后，它说「欢迎回来！」并继续走路。
+在网站上学习时，App 会用摄像头看看你还在不在电脑前：连续 5 秒看不到人脸，小企鹅就切换到愤怒模式（Blender 动作 `Penguin_Angry`：举起鳍、皱眉、冒出生气符号），并说「哼！说好一起学习的呢？」；你回来 1 秒后，它消气（生气动作倒放）并继续走路。
 
 - 只在学习中（网站上点了「开始学习」）打开摄像头，暂停、结束学习或没在学习时摄像头关闭（摄像头指示灯也会熄灭）。
 - 画面只在本机交给人脸检测模型（MediaPipe BlazeFace，`assets/models/blaze_face_short_range.tflite`），不保存、不上传。
 - 第一次使用时 macOS 会询问是否允许摄像头；不小心拒绝了，到「系统设置 → 隐私与安全性 → 摄像头」里打开「Senli Penguin」。
 - 不想用时，右键小企鹅或点菜单栏图标，取消勾选「离开检测（学习时用摄像头）」。
-- 离开时的新动作：把透明背景序列帧放到 `assets/pet-away.webp`，并在 `renderer.js` 的 `SHEETS.away` 里填上帧数和列数；文件不存在时先用「坐下 + 说话」代替。
+- 愤怒动画：`assets/pet-angry.webp`（48 帧，8 列）。前 11 帧是生气起来的过程，之后从第 12 帧循环到第 48 帧（`renderer.js` 里的 `ANGRY_LOOP_START`）。
 
 ## 安装（Mac）
 
@@ -50,6 +50,6 @@ npm run dist:mac   # 打包 Apple 芯片和 Intel 两个版本到 release/
 ```
 
 - `main.js`：透明置顶窗口、点击穿透、拖动、沿屏幕底部移动、菜单栏图标和右键菜单。
-- `renderer.js`：序列帧动画和行为（走路 / 坐下休息 / 离开时找你、点击说话、只在不透明像素上接收鼠标）。
+- `renderer.js`：序列帧动画和行为（走路 / 坐下休息 / 离开时愤怒、点击说话、只在不透明像素上接收鼠标）。
 - `face.js`：摄像头人脸检测（学习中每 0.5 秒检测一次）。
 - 更换画面：替换 `assets/pet-walk.webp`（28 帧，7 列）和 `assets/pet-sit.webp`（60 帧，10 列），每帧 192×192。
