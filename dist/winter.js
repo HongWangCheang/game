@@ -1,21 +1,42 @@
-/** 冬天：网页背景飘雪，陪伴框播放 Blender 小企鹅动画——学习时循环播放，停止学习时停在第一帧。 */
+/** 冬天：网页背景飘雪，陪伴框播放 Blender 小企鹅动画——学习时走路，暂停或未开始时坐下休息。 */
 (() => {
   const forest = document.getElementById('forest');
-  const video = document.getElementById('world-winter');
+  const mount = document.getElementById('world-winter');
   const canvas = document.getElementById('page-snow');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isWinter = () => forest.dataset.season === 'winter';
   let running = forest.dataset.state === 'running';
 
+  // 四段 Blender 渲染动画：走路循环、坐下、坐着休息循环、站起来。首尾帧相接，切换时直接换段。
+  const clips = Object.fromEntries([...mount.querySelectorAll('.penguin-clip')].map(clip => [clip.dataset.clip, clip]));
+  let current = null, loaded = false;
+
+  function show(name) {
+    const clip = clips[name];
+    if (current !== name) {
+      for (const [key, other] of Object.entries(clips)) if (key !== name) other.pause();
+      current = name;
+      clip.currentTime = 0;
+    }
+    clip.play().then(() => {
+      // 等新的一段真正开始播放后再显示，避免切换时闪一下空白。
+      if (current === name) for (const other of Object.values(clips)) other.classList.toggle('current', other === clip);
+    }).catch(() => { /* 浏览器拒绝自动播放时保持当前画面 */ });
+  }
+
   function syncPenguin() {
-    if (isWinter() && running) {
-      if (video.preload === 'none') { video.preload = 'auto'; video.load(); }
-      video.play().catch(() => { /* 浏览器拒绝自动播放时停在第一帧 */ });
+    if (!isWinter()) { Object.values(clips).forEach(clip => clip.pause()); current = null; return; }
+    if (!loaded) { loaded = true; for (const clip of Object.values(clips)) { clip.preload = 'auto'; clip.load(); } }
+    if (running) {
+      if (current === 'walk' || current === 'stand-up') { if (clips[current].paused) show(current); return; }
+      show(current && !reduced ? 'stand-up' : 'walk');
     } else {
-      video.pause();
-      if (video.readyState > 0) video.currentTime = 0;
+      if (current === 'sit-idle' || current === 'sit-down') { if (clips[current].paused) show(current); return; }
+      show(current === 'walk' && !reduced ? 'sit-down' : 'sit-idle');
     }
   }
+  clips['sit-down'].addEventListener('ended', () => { if (current === 'sit-down') show(running ? 'stand-up' : 'sit-idle'); });
+  clips['stand-up'].addEventListener('ended', () => { if (current === 'stand-up') show(running ? 'walk' : 'sit-down'); });
 
   const ctx = canvas.getContext('2d');
   const flakes = [];
