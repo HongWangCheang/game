@@ -22,7 +22,10 @@
       "index.html",
       "renderer.js",
       "assets/**",
-      "face.js"
+      "face.js",
+      "face-core.js",
+      "camtest.html",
+      "camtest.js"
     ],
     "mac": {
       "category": "public.app-category.education",

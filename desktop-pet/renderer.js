@@ -59,7 +59,7 @@ window.addEventListener('face:presence', event => {
     say(pick(['欢迎回来！这次原谅你～', '你回来啦，继续加油！']));
   }
 });
-window.addEventListener('face:error', () => say('摄像头没打开，离开检测暂停了'));
+window.addEventListener('face:error', () => say('摄像头没打开～右键我选「测试摄像头」看看'));
 
 function onStudy(status) {
   if (status === 'running') { setMode('studying'); say(pick(['开始学习啦，我陪你！', '一起加油！'])); }

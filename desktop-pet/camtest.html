@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; img-src 'self' blob:; media-src 'self' mediastream:; style-src 'self' 'unsafe-inline'">
+  <title>摄像头测试 · 萌宠监管</title>
+  <style>
+    body { margin: 0; padding: 14px; font-family: -apple-system, "PingFang SC", sans-serif; background: #f6f1e7; color: #2c4b31; }
+    h1 { font-size: 15px; margin: 0 0 8px; }
+    canvas { width: 100%; border-radius: 10px; background: #222; display: block; transform: scaleX(-1); }
+    #status { margin: 10px 0 4px; font-size: 15px; font-weight: 600; }
+    #status.ok { color: #2f7d32; } #status.no { color: #c0392b; }
+    p { font-size: 12px; line-height: 1.6; margin: 4px 0; color: #5b6b55; }
+  </style>
+</head>
+<body>
+  <h1>摄像头测试</h1>
+  <canvas id="view" width="640" height="480"></canvas>
+  <div id="status">正在打开摄像头…</div>
+  <p id="detail"></p>
+  <p>画面只在这台电脑上处理，不保存、不上传。关闭这个窗口后摄像头就会关闭。</p>
+  <script type="module" src="camtest.js"></script>
+</body>
+</html>

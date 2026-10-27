@@ -115,3 +115,11 @@ node tests/study-timer.test.cjs
 - `.github/workflows/pages.yml`：每次推送到 `main`（`dist/` 有改动时）先跑回归测试，再把 `dist/` 发布到 GitHub Pages。
 - 首次启用：仓库管理员在 GitHub 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**，然后在 **Actions** 里重新运行一次「Deploy site to GitHub Pages」。
 - 本地存储键名（`senli-*`）保持不变，改名不影响已有的学习记录。
+
+## 离开检测（网页版）
+
+陪伴框右上角的 📷 按钮打开「离开检测」（`dist/face-watch.js`，与桌宠 App 共用 `face-core.js`）：学习时连续 5 秒看不到人脸，生气的小企鹅（`assets/pet-angry.webp`，Blender 动作 `Penguin_Angry`）会跳出来说「快回来学习！」，标签页标题闪烁「😠 快回来学习！」；回来 1 秒后它消气离开。桌宠小窗里的小企鹅也会一起生气。
+
+- 只在学习中使用摄像头；暂停、结束或关闭 📷 后摄像头关闭。画面只在浏览器里处理，不保存、不上传。
+- 识别用 MediaPipe BlazeFace（`dist/vendor/mediapipe/`，约 12 MB，Apache-2.0），只在第一次打开 📷 时下载。
+- 浏览器会把后台标签页的定时器放慢，切到别的标签页时检测会变慢；想在用别的软件时也被监督，用 Mac 桌宠 App。

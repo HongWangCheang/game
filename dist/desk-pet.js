@@ -10,6 +10,7 @@
   const SHEETS = {
     walk: { src: 'assets/pet-walk.webp', frames: 28, columns: 7 },
     sit: { src: 'assets/pet-sit.webp', frames: 60, columns: 10 },
+    angry: { src: 'assets/pet-angry.webp', frames: 48, columns: 8 },
   };
   const forest = document.getElementById('forest');
   const pet = document.getElementById('desk-pet');
@@ -151,6 +152,15 @@
     if (status === 'idle') { pipWindow?.close(); return; }
     if (pipWindow) applyPose(previous);
   }
+
+  // 离开检测（face-watch.js）：看不到你时小窗里的小企鹅也生气，回来后消气接着走。
+  const ANGRY_LOOP_START = 11;
+  document.addEventListener('face:presence', event => {
+    if (!pipWindow || status !== 'running') return;
+    if (!event.detail.present) play(reduced ? [['angry', ANGRY_LOOP_START, 47, true]] : [['angry', 0, 47, false], ['angry', ANGRY_LOOP_START, 47, true]]);
+    else play(reduced || clip !== 'angry' ? [['walk', 0, 27, true]] : [['angry', Math.min(frame, ANGRY_LOOP_START), 0, false], ['walk', 0, 27, true]]);
+    draw();
+  });
 
   document.addEventListener('study:state', event => {
     const previous = status;

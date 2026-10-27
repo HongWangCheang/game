@@ -51,7 +51,13 @@ html[data-season=winter] body{background-image:url('assets/winter-forest.jpeg')}
 .desk-pet:hover .desk-pet-tools{opacity:1}
 .desk-pet-tools button{width:24px;height:24px;padding:0;border-radius:50%;border:1px solid #e6dcb5;background:#fffde9f2;color:#2c4b31;font-size:14px;line-height:1}
 .desk-pet-pip-body{margin:0;height:100vh;display:grid;place-items:center;background:#f6f1e7;overflow:hidden}
-.desk-pet-summon{position:absolute;right:122px;top:22px;z-index:3;width:40px;height:40px;padding:0;border-radius:50%;border:1px solid #fcf3d2;background:#fffde9eb;font-size:20px;line-height:1;cursor:pointer;transition:transform .2s,background .2s}
-.desk-pet-summon:hover{background:#fffff4;transform:translateY(-1px)}.desk-pet-summon[aria-pressed=true]{background:#dbe5bf;border-color:#b8c78f}.desk-pet-summon[hidden]{display:none}
-@media(max-width:740px){.desk-pet-summon{right:100px;top:16px;width:34px;height:34px;font-size:17px}}
+.scene-tools{position:absolute;right:122px;top:22px;z-index:3;display:flex;gap:8px}
+.scene-tool{width:40px;height:40px;padding:0;display:grid;place-items:center;color:#2c4b31;border-radius:50%;border:1px solid #fcf3d2;background:#fffde9eb;font-size:20px;line-height:1;cursor:pointer;transition:transform .2s,background .2s}
+.scene-tool:hover{background:#fffff4;transform:translateY(-1px)}.scene-tool[aria-pressed=true]{background:#dbe5bf;border-color:#b8c78f}.scene-tool[hidden]{display:none}
+@media(max-width:740px){.scene-tools{right:100px;top:16px;gap:6px}.scene-tool{width:34px;height:34px;font-size:17px}}
 @media(prefers-reduced-motion:reduce){.desk-pet.hop canvas{animation:none}}
+.face-watch .icon{width:20px;height:20px}
+.angry-pet{position:absolute;left:50%;bottom:6%;z-index:3;width:min(46%,260px);aspect-ratio:1;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 10px 14px #1c2d2340)}
+.angry-pet canvas{width:100%;height:100%;display:block}
+.angry-pet-bubble{position:absolute;left:50%;top:-6px;transform:translateX(-50%);white-space:nowrap;padding:7px 14px;border-radius:16px;background:#fff4f0f5;border:1px solid #f0b8a8;color:#a8321e;font-size:14px;font-weight:600;box-shadow:0 3px 10px #1c2d2326}
+.angry-pet-bubble:empty{display:none}

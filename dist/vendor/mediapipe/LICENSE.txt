@@ -1,0 +1,2 @@
+MediaPipe Tasks Vision 1.0.1 (@mediapipe/tasks-vision), Apache License 2.0, https://github.com/google-ai-edge/mediapipe
+BlazeFace short-range model, Apache License 2.0

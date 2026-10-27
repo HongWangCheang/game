@@ -28,7 +28,7 @@ function createWindow() {
     transparent: true, frame: false, resizable: false, hasShadow: false,
     skipTaskbar: true, alwaysOnTop: true, focusable: false, fullscreenable: false,
     backgroundColor: '#00000000',
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false },
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
   });
   // 浮在所有窗口之上，切换桌面（Space）或别的软件全屏时也一直在。
   win.setAlwaysOnTop(true, 'screen-saver');
@@ -36,6 +36,17 @@ function createWindow() {
   // 透明区域点击穿透，只有点到小企鹅身上才会响应。
   win.setIgnoreMouseEvents(true, { forward: true });
   win.loadFile('index.html');
+}
+
+let cameraTest = null;
+function openCameraTest() {
+  if (cameraTest) { cameraTest.show(); cameraTest.focus(); return; }
+  cameraTest = new BrowserWindow({
+    width: 420, height: 520, title: '摄像头测试', resizable: false, alwaysOnTop: true, autoHideMenuBar: true,
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false },
+  });
+  cameraTest.loadFile('camtest.html');
+  cameraTest.on('closed', () => { cameraTest = null; });
 }
 
 function showMenu() {
@@ -46,6 +57,7 @@ function showMenu() {
     { type: 'separator' },
     { label: '离开检测（学习时用摄像头）', type: 'checkbox', checked: settings.faceDetection,
       click: item => { settings.faceDetection = item.checked; saveSettings(); win.webContents.send('pet:face-setting', item.checked); } },
+    { label: '测试摄像头…', click: openCameraTest },
     { label: '回到右下角', click: () => { const p = homePosition(); win.setPosition(p.x, p.y); } },
     { label: '开机时自动启动', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin,
       click: item => app.setLoginItemSettings({ openAtLogin: item.checked }) },
@@ -65,6 +77,7 @@ app.whenReady().then(() => {
   tray.on('right-click', () => tray.popUpContextMenu(showMenu()));
 });
 app.on('window-all-closed', () => app.quit());
+// 只关掉摄像头测试窗口时不退出：桌宠窗口还在。
 
 ipcMain.handle('pet:face-setting', () => settings.faceDetection);
 // macOS 第一次使用摄像头时会弹出系统授权窗口；用户拒绝后需要到「系统设置 → 隐私与安全性 → 摄像头」里打开。
