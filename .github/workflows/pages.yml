@@ -1,0 +1,38 @@
+# 萌宠监管网站：每次推送到 main，自动把 dist/ 发布到 GitHub Pages。
+# 首次使用需要仓库管理员在 Settings → Pages → Build and deployment 里把 Source 选为「GitHub Actions」。
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ['dist/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run regression tests
+        run: node tests/study-timer.test.cjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

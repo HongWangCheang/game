@@ -94,7 +94,7 @@
     const link = doc.createElement('link');
     link.rel = 'stylesheet'; link.href = new URL('styles.css', location.href).href;
     doc.head.append(link);
-    doc.title = '森里 · 小企鹅';
+    doc.title = '萌宠监管 · 小企鹅';
     doc.body.className = 'desk-pet-pip-body';
     doc.body.append(pet);
     pet.hidden = false;
