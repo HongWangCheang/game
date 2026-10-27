@@ -452,7 +452,7 @@
     text('timer', display);
     $('timer')?.setAttribute('aria-live', 'off');
     $('timer')?.setAttribute('aria-label', `${mode === 'pomodoro' ? '本次专注剩余时间' : '本次学习时长'} ${display}`);
-    document.title = status === 'running' ? `${display} · 森里学习中` : '森里 · 学习计时';
+    document.title = status === 'running' ? `${display} · 萌宠监管学习中` : '萌宠监管 · 学习计时';
     renderRecords(now);
     renderCalendar(now);
     renderSubjectStats(now);

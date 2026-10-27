@@ -107,3 +107,11 @@ node tests/study-timer.test.cjs
 ## 桌面宠物 App
 
 `desktop-pet/` 是独立的 Mac 桌宠小程序（Electron）：透明背景、总在最前面，不需要打开网站。安装和开发说明见 `desktop-pet/README.md`。
+
+## 网站名称与公开地址
+
+网站名为「萌宠监管」，通过 GitHub Pages 公开发布：**https://hongwangcheang.github.io/game/**
+
+- `.github/workflows/pages.yml`：每次推送到 `main`（`dist/` 有改动时）先跑回归测试，再把 `dist/` 发布到 GitHub Pages。
+- 首次启用：仓库管理员在 GitHub 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**，然后在 **Actions** 里重新运行一次「Deploy site to GitHub Pages」。
+- 本地存储键名（`senli-*`）保持不变，改名不影响已有的学习记录。
